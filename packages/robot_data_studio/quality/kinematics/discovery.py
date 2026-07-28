@@ -73,7 +73,7 @@ def discover_profile(
         training_indexes = held_out_indexes
 
     feature_names = request.feature_names or [f"state_{index}" for index in range(sampled.shape[1])]
-    fingerprint = _fingerprint(engine.urdf_path, sampled.shape, feature_names)
+    fingerprint = _fingerprint(engine.urdf_path, sampled, feature_names)
     pose_candidates = _pose_candidates(sampled)
     candidates: list[ProfileCandidate] = []
 
@@ -276,10 +276,12 @@ def _representative_indices(states: np.ndarray, sample_count: int) -> np.ndarray
     return np.asarray(selected, dtype=int)
 
 
-def _fingerprint(path: Path, state_shape: tuple[int, ...], feature_names: list[str]) -> str:
+def _fingerprint(path: Path, states: np.ndarray, feature_names: list[str]) -> str:
     digest = hashlib.sha256()
     digest.update(path.read_bytes())
-    digest.update(repr(state_shape).encode("utf-8"))
+    contiguous = np.ascontiguousarray(states, dtype=np.float64)
+    digest.update(repr(contiguous.shape).encode("utf-8"))
+    digest.update(contiguous.tobytes())
     digest.update("\0".join(feature_names).encode("utf-8"))
     return digest.hexdigest()
 

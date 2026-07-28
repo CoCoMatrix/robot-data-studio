@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from .kinematics import KinematicProfile
+
 
 FilterStageId = Literal[
     "visual_quality",
@@ -153,8 +155,36 @@ class FilterKinematicsConfig(BaseModel):
     joint_names: list[str] = Field(default_factory=list)
     joint_state_indices: list[int] = Field(default_factory=list)
     eef_position_indices: list[int] = Field(default_factory=list)
+    eef_orientation_indices: list[int] = Field(default_factory=list)
+    eef_orientation_representation: Literal[
+        "quaternion_xyzw",
+        "quaternion_wxyz",
+        "rotation_6d",
+        "rotation_matrix",
+        "rotation_vector",
+        "rpy",
+    ] | None = None
     position_tolerance: float = 0.05
+    orientation_tolerance: float = 0.1
     resolve_tcp_offset: bool = True
+    profile: KinematicProfile | None = None
+    accepted_proposal_id: str | None = None
+
+
+class KinematicDiscoveryRequest(BaseModel):
+    episode_indexes: list[int] | None = None
+    max_candidates: int = Field(default=20, ge=1, le=100)
+    sample_count: int = Field(default=64, ge=4, le=512)
+    max_joint_mappings: int = Field(default=256, ge=1, le=4096)
+    allow_base: bool = True
+    allow_tcp: bool = True
+    allow_joint_sign: bool = True
+    allow_joint_offset: bool = True
+    min_candidate_margin: float = Field(default=1e-4, ge=0)
+
+
+class KinematicProposalDecision(BaseModel):
+    decision: Literal["accept", "reject", "reset"]
 
 
 class MetadataCompletenessConfig(BaseModel):

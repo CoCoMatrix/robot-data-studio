@@ -5,6 +5,8 @@ import hashlib
 from pathlib import Path
 from uuid import uuid4
 
+import numpy as np
+
 from robot_data_studio.formats import ExportResult, FormatRegistry
 from robot_data_studio.formats.models import DatasetAdapter
 from robot_data_studio.quality import (
@@ -20,7 +22,17 @@ from robot_data_studio.quality import (
     FilterKinematicsConfig,
     FilterRun,
     FilterSummary,
+    KinematicDiscoveryRequest,
+    KinematicProposalDecision,
     VlmSettings,
+)
+from robot_data_studio.quality.kinematics import (
+    CorrectionOptions,
+    CorrectionProposal,
+    DiscoveryRefusal,
+    DiscoveryRequest,
+    discover_profile,
+    fit_correction,
 )
 from robot_data_studio.quality.filter_service import (
     DatasetFilterService,
@@ -312,7 +324,30 @@ class ProjectService:
             artifact = self._load_visual_quality_artifact(project_id, episode_index)
             if artifact is not None:
                 return artifact
-        return self._filter_service(project_id).detail(stage_id, episode_index)  # type: ignore[arg-type]
+        if stage_id == "kinematic_consistency":
+            self._invalidate_active_kinematics_if_stale(project_id)
+        detail = self._filter_service(project_id).detail(stage_id, episode_index)  # type: ignore[arg-type]
+        if stage_id == "kinematic_consistency":
+            accepted_id = self.filter_config(project_id).kinematics.accepted_proposal_id
+            accepted = next(
+                (item for item in self.kinematic_proposals(project_id) if item.id == accepted_id),
+                None,
+            )
+            if accepted is not None:
+                parameters = {
+                    **detail.parameters,
+                    "accepted_proposal": {
+                        "id": accepted.id,
+                        "fingerprint": accepted.fingerprint,
+                        "confidence": accepted.confidence,
+                        "evidence": accepted.evidence,
+                        "warnings": accepted.warnings,
+                        "before_held_out": accepted.before_held_out.model_dump(mode="json"),
+                        "after_held_out": accepted.after_held_out.model_dump(mode="json"),
+                    },
+                }
+                detail = detail.model_copy(update={"parameters": parameters})
+        return detail
 
     def visual_quality_frame(
         self,
@@ -352,12 +387,26 @@ class ProjectService:
     def update_filter_config(self, project_id: str, patch: FilterConfigPatch) -> FilterConfig:
         config = self.filter_config(project_id)
         update = {}
+        mapping_fields = {
+            "urdf_path",
+            "end_effector_link",
+            "joint_names",
+            "joint_state_indices",
+            "eef_position_indices",
+            "eef_orientation_indices",
+            "eef_orientation_representation",
+            "profile",
+        }
+        mapping_changed = patch.kinematics is not None and bool(
+            mapping_fields.intersection(patch.kinematics.model_fields_set)
+        )
         if patch.gripper_indices is not None:
             update["gripper_indices"] = patch.gripper_indices
         if patch.kinematics is not None:
-            update["kinematics"] = config.kinematics.model_copy(
-                update=patch.kinematics.model_dump(exclude_unset=True)
-            )
+            kinematic_update = patch.kinematics.model_dump(exclude_unset=True)
+            if mapping_changed and "profile" not in kinematic_update:
+                kinematic_update.update({"profile": None, "accepted_proposal_id": None})
+            update["kinematics"] = config.kinematics.model_copy(update=kinematic_update)
         if patch.visual_quality is not None:
             update["visual_quality"] = config.visual_quality.model_copy(
                 update=patch.visual_quality.model_dump(exclude_unset=True)
@@ -373,6 +422,8 @@ class ProjectService:
         updated = config.model_copy(update=update)
         self._save_filter_config(project_id, updated)
         self._remember_filter_config(project_id, updated)
+        if mapping_changed:
+            self._mark_kinematic_proposals_stale(project_id)
         return updated
 
     def save_filter_urdf(self, project_id: str, filename: str, content: bytes) -> dict[str, str]:
@@ -384,11 +435,159 @@ class ProjectService:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_bytes(content)
         config = self.filter_config(project_id)
-        updated_kinematics = config.kinematics.model_copy(update={"urdf_path": str(output)})
+        updated_kinematics = config.kinematics.model_copy(
+            update={
+                "urdf_path": str(output),
+                "profile": None,
+                "accepted_proposal_id": None,
+            }
+        )
         updated = config.model_copy(update={"kinematics": updated_kinematics})
         self._save_filter_config(project_id, updated)
         self._remember_filter_config(project_id, updated)
+        self._mark_kinematic_proposals_stale(project_id)
         return {"filename": safe_name, "path": str(output)}
+
+    def discover_kinematic_corrections(
+        self,
+        project_id: str,
+        request: KinematicDiscoveryRequest,
+    ) -> CorrectionProposal | DiscoveryRefusal:
+        config = self.filter_config(project_id).kinematics
+        if not config.urdf_path:
+            raise ValueError("Upload a URDF before running kinematic discovery")
+        reader = self.reader(project_id)
+        available = [episode.episode_index for episode in reader.list_episodes()]
+        indexes = request.episode_indexes or available[: min(len(available), 4)]
+        if not indexes:
+            raise ValueError("The dataset has no episodes to inspect")
+        invalid = sorted(set(indexes) - set(available))
+        if invalid:
+            raise ValueError(f"Unknown episode indexes: {invalid}")
+        rows = [
+            frame.observation_state
+            for episode_index in indexes
+            for frame in reader.read_episode_frames(episode_index)
+        ]
+        states = np.asarray(rows, dtype=np.float64)
+        feature_names = self._state_feature_names(project_id, states.shape[1])
+        candidates = discover_profile(
+            config.urdf_path,
+            DiscoveryRequest(
+                states=states,
+                feature_names=feature_names,
+                max_candidates=request.max_candidates,
+                sample_count=request.sample_count,
+                max_joint_mappings=request.max_joint_mappings,
+            ),
+        )
+        result = fit_correction(
+            states,
+            candidates,
+            CorrectionOptions(
+                allow_base=request.allow_base,
+                allow_tcp=request.allow_tcp,
+                allow_joint_sign=request.allow_joint_sign,
+                allow_joint_offset=request.allow_joint_offset,
+                min_candidate_margin=request.min_candidate_margin,
+                position_tolerance=config.position_tolerance,
+                orientation_tolerance=config.orientation_tolerance,
+            ),
+        )
+        if isinstance(result, CorrectionProposal):
+            fingerprint = self._kinematic_source_fingerprint(
+                Path(config.urdf_path), states, feature_names
+            )
+            profile = result.profile.model_copy(update={"fingerprint": fingerprint})
+            proposal_id = hashlib.sha256(
+                (profile.model_dump_json() + fingerprint).encode("utf-8")
+            ).hexdigest()[:16]
+            result = result.model_copy(
+                update={
+                    "id": proposal_id,
+                    "fingerprint": fingerprint,
+                    "profile": profile,
+                    "source_episode_indexes": indexes,
+                }
+            )
+            proposals = [item for item in self.kinematic_proposals(project_id) if item.id != result.id]
+            proposals.append(result)
+            self._save_kinematic_proposals(project_id, proposals)
+        return result
+
+    def kinematic_proposals(self, project_id: str) -> list[CorrectionProposal]:
+        self.project(project_id)
+        path = self._kinematic_proposals_store(project_id)
+        if not path.is_file():
+            return []
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return [CorrectionProposal.model_validate(item) for item in payload]
+
+    def decide_kinematic_proposal(
+        self,
+        project_id: str,
+        proposal_id: str,
+        request: KinematicProposalDecision,
+    ) -> CorrectionProposal:
+        proposals = self.kinematic_proposals(project_id)
+        selected = next((item for item in proposals if item.id == proposal_id), None)
+        if selected is None:
+            raise KeyError(f"Kinematic proposal {proposal_id!r} not found")
+        if not self._kinematic_proposal_is_current(project_id, selected):
+            proposals = [
+                item.model_copy(update={"status": "stale"})
+                if item.id == proposal_id else item
+                for item in proposals
+            ]
+            self._save_kinematic_proposals(project_id, proposals)
+            selected = next(item for item in proposals if item.id == proposal_id)
+            self._deactivate_kinematic_profile(project_id, proposal_id)
+        if selected.status == "stale" and request.decision == "accept":
+            raise ValueError("A stale kinematic proposal cannot be accepted; run discovery again")
+
+        if request.decision == "accept":
+            proposals = [
+                item.model_copy(
+                    update={"status": "accepted" if item.id == proposal_id else (
+                        "rejected" if item.status == "accepted" else item.status
+                    )}
+                )
+                for item in proposals
+            ]
+            config = self.filter_config(project_id)
+            selected = next(item for item in proposals if item.id == proposal_id)
+            kinematics = config.kinematics.model_copy(
+                update={
+                    "profile": selected.profile,
+                    "accepted_proposal_id": selected.id,
+                    "urdf_path": selected.profile.urdf_path,
+                }
+            )
+            updated = config.model_copy(update={"kinematics": kinematics})
+            self._save_filter_config(project_id, updated)
+            self._remember_filter_config(project_id, updated)
+        elif request.decision == "reject":
+            proposals = [
+                item.model_copy(update={"status": "rejected"})
+                if item.id == proposal_id else item
+                for item in proposals
+            ]
+        else:
+            proposals = [
+                item.model_copy(update={"status": "proposed"})
+                if item.id == proposal_id else item
+                for item in proposals
+            ]
+            config = self.filter_config(project_id)
+            if config.kinematics.accepted_proposal_id == proposal_id:
+                kinematics = config.kinematics.model_copy(
+                    update={"profile": None, "accepted_proposal_id": None}
+                )
+                updated = config.model_copy(update={"kinematics": kinematics})
+                self._save_filter_config(project_id, updated)
+                self._remember_filter_config(project_id, updated)
+        self._save_kinematic_proposals(project_id, proposals)
+        return next(item for item in proposals if item.id == proposal_id)
 
     def _entry(self, project_id: str) -> tuple[Project, DatasetAdapter]:
         try:
@@ -417,6 +616,112 @@ class ProjectService:
 
     def _filter_summary_store(self, project_id: str) -> Path:
         return self.project_artifact_dir(project_id) / "filter_summary.json"
+
+    def _kinematic_proposals_store(self, project_id: str) -> Path:
+        return self.project_artifact_dir(project_id) / "filters" / "kinematic_proposals.json"
+
+    def _save_kinematic_proposals(
+        self,
+        project_id: str,
+        proposals: list[CorrectionProposal],
+    ) -> None:
+        path = self._kinematic_proposals_store(project_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps([item.model_dump(mode="json") for item in proposals], indent=2),
+            encoding="utf-8",
+        )
+
+    def _mark_kinematic_proposals_stale(self, project_id: str) -> None:
+        proposals = self.kinematic_proposals(project_id)
+        if not proposals:
+            return
+        self._save_kinematic_proposals(
+            project_id,
+            [item.model_copy(update={"status": "stale"}) for item in proposals],
+        )
+
+    def _invalidate_active_kinematics_if_stale(self, project_id: str) -> None:
+        config = self.filter_config(project_id)
+        proposal_id = config.kinematics.accepted_proposal_id
+        if not proposal_id:
+            return
+        proposals = self.kinematic_proposals(project_id)
+        proposal = next((item for item in proposals if item.id == proposal_id), None)
+        if proposal is not None and self._kinematic_proposal_is_current(project_id, proposal):
+            return
+        if proposal is not None and proposal.status != "stale":
+            self._save_kinematic_proposals(
+                project_id,
+                [
+                    item.model_copy(update={"status": "stale"})
+                    if item.id == proposal_id else item
+                    for item in proposals
+                ],
+            )
+        self._deactivate_kinematic_profile(project_id, proposal_id)
+
+    def _kinematic_proposal_is_current(
+        self,
+        project_id: str,
+        proposal: CorrectionProposal,
+    ) -> bool:
+        if proposal.status == "stale":
+            return False
+        if not proposal.source_episode_indexes:
+            return True
+        try:
+            current_states = np.asarray(
+                [
+                    frame.observation_state
+                    for episode_index in proposal.source_episode_indexes
+                    for frame in self.reader(project_id).read_episode_frames(episode_index)
+                ],
+                dtype=np.float64,
+            )
+            current_names = self._state_feature_names(project_id, current_states.shape[1])
+            current_fingerprint = self._kinematic_source_fingerprint(
+                Path(proposal.profile.urdf_path), current_states, current_names
+            )
+        except (KeyError, OSError, ValueError):
+            return False
+        return current_fingerprint == proposal.fingerprint
+
+    def _deactivate_kinematic_profile(self, project_id: str, proposal_id: str) -> None:
+        config = self.filter_config(project_id)
+        if config.kinematics.accepted_proposal_id != proposal_id:
+            return
+        kinematics = config.kinematics.model_copy(
+            update={"profile": None, "accepted_proposal_id": None}
+        )
+        updated = config.model_copy(update={"kinematics": kinematics})
+        self._save_filter_config(project_id, updated)
+        self._remember_filter_config(project_id, updated)
+
+    def _state_feature_names(self, project_id: str, width: int) -> list[str]:
+        feature = self.project(project_id).dataset.features.get("observation.state", {})
+        names = feature.get("names", {}) if isinstance(feature, dict) else {}
+        if isinstance(names, dict):
+            flattened = [str(name) for group in names.values() if isinstance(group, list) for name in group]
+        elif isinstance(names, list):
+            flattened = [str(name) for name in names]
+        else:
+            flattened = []
+        return flattened if len(flattened) == width else [f"state_{index}" for index in range(width)]
+
+    @staticmethod
+    def _kinematic_source_fingerprint(
+        urdf_path: Path,
+        states: np.ndarray,
+        feature_names: list[str],
+    ) -> str:
+        digest = hashlib.sha256()
+        digest.update(urdf_path.read_bytes())
+        contiguous = np.ascontiguousarray(states, dtype=np.float64)
+        digest.update(repr(contiguous.shape).encode("utf-8"))
+        digest.update(contiguous.tobytes())
+        digest.update("\0".join(feature_names).encode("utf-8"))
+        return digest.hexdigest()
 
     def _visual_quality_artifact_dir(self, project_id: str) -> Path:
         return self.project_artifact_dir(project_id) / "filters" / "visual-quality"

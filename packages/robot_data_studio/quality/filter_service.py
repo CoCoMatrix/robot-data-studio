@@ -41,6 +41,7 @@ from robot_data_studio.quality.metadata_completeness import (
     build_metadata_inspection,
     inspection_summary,
 )
+from robot_data_studio.quality.kinematics import PinocchioKinematics
 from robot_data_studio.quality.qwen_filters import (
     ExtremeValueConfig,
     SuddenChangeConfig,
@@ -955,10 +956,8 @@ class DatasetFilterService:
                 skipped_reason=skipped_reason,
             )
         config = self.config.kinematics
-        if not (
-            config.end_effector_link
-            and config.joint_names
-            and config.eef_position_indices
+        if config.profile is None and not (
+            config.end_effector_link and config.joint_names and config.eef_position_indices
         ):
             return EpisodeFilterStageStatus(
                 count=0,
@@ -967,7 +966,7 @@ class DatasetFilterService:
                 skipped_reason="eef_pose_missing",
             )
         try:
-            result = _pinocchio_fk_detail(states, config)
+            result = _kinematic_fk_detail(states, config)
         except Exception:
             return EpisodeFilterStageStatus(
                 count=0,
@@ -975,7 +974,10 @@ class DatasetFilterService:
                 score=None,
                 skipped_reason="fk_failed",
             )
-        count = int(np.sum(result["errors"] > config.position_tolerance))
+        failed = result["errors"] > config.position_tolerance
+        if "orientation_errors" in result:
+            failed |= result["orientation_errors"] > config.orientation_tolerance
+        count = int(np.sum(failed))
         return self._count_status(
             count,
             len(states),
@@ -1225,10 +1227,8 @@ class DatasetFilterService:
                 "Please import a URDF file first.",
             )
         config = self.config.kinematics
-        if not (
-            config.end_effector_link
-            and config.joint_names
-            and config.eef_position_indices
+        if config.profile is None and not (
+            config.end_effector_link and config.joint_names and config.eef_position_indices
         ):
             return self._skipped_detail(
                 "kinematic_consistency",
@@ -1239,7 +1239,7 @@ class DatasetFilterService:
         frames = self.reader.read_episode_frames(episode_index)
         states = np.asarray([frame.observation_state for frame in frames], dtype=np.float64)
         try:
-            result = _pinocchio_fk_detail(states, config)
+            result = _kinematic_fk_detail(states, config)
         except Exception as error:
             return self._skipped_detail(
                 "kinematic_consistency",
@@ -1247,10 +1247,16 @@ class DatasetFilterService:
                 "fk_failed",
                 f"Pinocchio FK failed: {error}",
             )
+        orientation_errors = result.get("orientation_errors")
         rows = [
             {
                 "frame": index,
-                "error": round(float(error), 6),
+                "position_error": round(float(error), 6),
+                **(
+                    {"orientation_error": round(float(orientation_errors[index]), 6)}
+                    if orientation_errors is not None
+                    else {}
+                ),
                 "logged": [round(float(item), 6) for item in logged],
                 "fk": [round(float(item), 6) for item in fk],
             }
@@ -1258,18 +1264,33 @@ class DatasetFilterService:
                 zip(result["errors"], result["logged"], result["predicted"], strict=True)
             )
             if error > config.position_tolerance
+            or (
+                orientation_errors is not None
+                and orientation_errors[index] > config.orientation_tolerance
+            )
         ][:100]
+        series = {"position_error": self._sample(result["errors"])}
+        if orientation_errors is not None:
+            series["orientation_error"] = self._sample(orientation_errors)
         return FilterDetail(
             stage_id="kinematic_consistency",
             episode_index=episode_index,
             title=STAGE_LABELS["kinematic_consistency"],
             status="review" if rows else "passed",
-            series={"position_error": self._sample(result["errors"])},
+            series=series,
             table_rows=rows,
             parameters={
                 **config.model_dump(),
                 "max_error": round(float(np.max(result["errors"])), 6) if len(result["errors"]) else 0.0,
                 "mean_error": round(float(np.mean(result["errors"])), 6) if len(result["errors"]) else 0.0,
+                **(
+                    {
+                        "max_orientation_error": round(float(np.max(orientation_errors)), 6),
+                        "mean_orientation_error": round(float(np.mean(orientation_errors)), 6),
+                    }
+                    if orientation_errors is not None and len(orientation_errors)
+                    else {}
+                ),
             },
             findings=self._finding_list(len(rows), "kinematic_consistency", "Detected FK vs logged EEF mismatch frames."),
         )
@@ -1610,6 +1631,33 @@ def _visual_row(
         value=value,
         threshold=threshold,
     )
+
+
+def _kinematic_fk_detail(states: np.ndarray, config: FilterKinematicsConfig) -> dict[str, np.ndarray]:
+    if config.profile is None:
+        return _pinocchio_fk_detail(states, config)
+    engine = PinocchioKinematics(config.profile.urdf_path)
+    position_errors = []
+    orientation_errors = []
+    predicted_positions = []
+    logged_positions = []
+    for chain in config.profile.chains:
+        predicted = engine.predict_chain(states, chain)
+        logged = engine.logged_chain_transforms(states, chain)
+        residual = engine.evaluate(
+            states,
+            config.profile.model_copy(update={"chains": [chain]}),
+        )[chain.id]
+        position_errors.append(residual.position_errors)
+        orientation_errors.append(residual.orientation_errors)
+        predicted_positions.append(predicted[:, :3, 3])
+        logged_positions.append(logged[:, :3, 3])
+    return {
+        "predicted": predicted_positions[0],
+        "logged": logged_positions[0],
+        "errors": np.max(np.stack(position_errors, axis=0), axis=0),
+        "orientation_errors": np.max(np.stack(orientation_errors, axis=0), axis=0),
+    }
 
 
 def _pinocchio_fk_detail(states: np.ndarray, config: FilterKinematicsConfig) -> dict[str, np.ndarray]:

@@ -53,6 +53,7 @@ class CorrectionProposal(BaseModel):
     evidence: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     status: Literal["proposed", "accepted", "rejected", "stale"] = "proposed"
+    source_episode_indexes: list[int] = Field(default_factory=list)
 
 
 def fit_correction(
@@ -67,7 +68,8 @@ def fit_correction(
     if not candidates:
         return DiscoveryRefusal(reason="no_candidates", evidence=["Discovery returned no candidates."])
     ordered = sorted(candidates, key=lambda candidate: candidate.score)
-    margin = float("inf")
+    # Keep persisted/API payloads strict-JSON compatible when discovery yields one candidate.
+    margin = 1.0
     if len(ordered) > 1:
         margin = float(ordered[1].score - ordered[0].score)
         if margin < options.min_candidate_margin:
