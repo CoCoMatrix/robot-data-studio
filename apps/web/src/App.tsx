@@ -3,11 +3,14 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerE
 
 import {
   createRecording,
+  decideKinematicProposal,
+  discoverKinematicCorrections,
   exportDataset,
   getFilterDetail,
   getReportSignals,
   getVlmSettings,
   importDataset,
+  listKinematicProposals,
   listFormats,
   listEpisodes,
   runPipelineStream,
@@ -28,6 +31,8 @@ import {
   type FilterSummary,
   type FormatInfo,
   type Project,
+  type KinematicCorrectionProposal,
+  type KinematicDiscoveryRefusal,
   type ReportGripperSeries,
   type ReportSignals,
   type VisualQualityIncident,
@@ -163,10 +168,14 @@ function dataFilters(copy: Translation): Array<{ id: QualityRuleId; stageId?: Fi
 
 function isKinematicsConfigured(config: FilterConfig["kinematics"] | null | undefined) {
   return Boolean(
-    config?.urdf_path &&
-    config.end_effector_link &&
-    config.joint_names.length > 0 &&
-    config.eef_position_indices.length > 0,
+    config?.urdf_path && (
+      (config.profile && config.accepted_proposal_id)
+      || (
+        config.end_effector_link
+        && config.joint_names.length > 0
+        && config.eef_position_indices.length > 0
+      )
+    ),
   );
 }
 
@@ -400,7 +409,10 @@ export default function App() {
   });
   const urdfUploadMutation = useMutation({
     mutationFn: (file: File) => uploadKinematicsUrdf(project!.id, file),
-    onSuccess: () => filterDetailQuery.refetch(),
+    onSuccess: () => {
+      filterDetailQuery.refetch();
+      kinematicProposalsQuery.refetch();
+    },
   });
   const filterConfigMutation = useMutation({
     mutationFn: (config: Partial<FilterConfig>) => saveFilterConfig(project!.id, config),
@@ -468,6 +480,43 @@ export default function App() {
     enabled: Boolean(project && activeFilterStage && selected !== null),
   });
   const selectedFilterDetail = filterDetailQuery.data ?? null;
+  const kinematicProposalsQuery = useQuery({
+    queryKey: ["kinematic-proposals", project?.id],
+    queryFn: () => listKinematicProposals(project!.id),
+    enabled: Boolean(
+      project
+      && activeFilterStage === "kinematic_consistency"
+      && selectedFilterDetail?.parameters.urdf_path,
+    ),
+  });
+  const kinematicDiscoveryMutation = useMutation({
+    mutationFn: () => discoverKinematicCorrections(project!.id),
+    onSuccess: (result) => {
+      if (!("reason" in result)) {
+        queryClient.setQueryData<KinematicCorrectionProposal[]>(
+          ["kinematic-proposals", project!.id],
+          (current = []) => [...current.filter((item) => item.id !== result.id), result],
+        );
+      }
+    },
+  });
+  const kinematicDecisionMutation = useMutation({
+    mutationFn: ({
+      proposalId,
+      decision,
+    }: {
+      proposalId: string;
+      decision: "accept" | "reject" | "reset";
+    }) => decideKinematicProposal(project!.id, proposalId, decision),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<KinematicCorrectionProposal[]>(
+        ["kinematic-proposals", project!.id],
+        (current = []) => current.map((item) => item.id === updated.id ? updated : item),
+      );
+      if (updated.status === "accepted") setKinematicsConfigured(true);
+      filterDetailQuery.refetch();
+    },
+  });
   const formats = formatsQuery.data ?? [];
   const importFormats = formats.filter((format) => format.can_import);
   const exportFormats = formats.filter((format) => format.can_export);
@@ -619,6 +668,8 @@ export default function App() {
     vlmSettingsMutation.error ??
     urdfUploadMutation.error ??
     filterConfigMutation.error ??
+    kinematicDiscoveryMutation.error ??
+    kinematicDecisionMutation.error ??
     cleaningMutation.error;
 
   return (
@@ -891,6 +942,26 @@ export default function App() {
                       onUrdfUpload={(file) => urdfUploadMutation.mutate(file)}
                       onConfigSave={(config) => filterConfigMutation.mutate(config)}
                       configSaving={filterConfigMutation.isPending}
+                      proposals={kinematicProposalsQuery.data ?? []}
+                      discoveryResult={kinematicDiscoveryMutation.data ?? null}
+                      correctionPending={
+                        kinematicProposalsQuery.isLoading
+                        || kinematicDiscoveryMutation.isPending
+                        || kinematicDecisionMutation.isPending
+                      }
+                      correctionError={
+                        kinematicProposalsQuery.error
+                        || kinematicDiscoveryMutation.error
+                        || kinematicDecisionMutation.error
+                      }
+                      onDiscover={() => kinematicDiscoveryMutation.mutate()}
+                      onProposalDecision={(proposalId, decision) => {
+                        if (
+                          decision === "accept"
+                          && !window.confirm(copy.kinematics.acceptConfirm)
+                        ) return;
+                        kinematicDecisionMutation.mutate({ proposalId, decision });
+                      }}
                     />
                   </div>
                 ) : recordingUrl ? (
@@ -2294,6 +2365,12 @@ function FilterDetailView({
   onUrdfUpload,
   onConfigSave,
   configSaving,
+  proposals,
+  discoveryResult,
+  correctionPending,
+  correctionError,
+  onDiscover,
+  onProposalDecision,
 }: {
   copy: Translation;
   projectId: string;
@@ -2303,6 +2380,15 @@ function FilterDetailView({
   onUrdfUpload: (file: File) => void;
   onConfigSave: (config: Partial<FilterConfig>) => void;
   configSaving: boolean;
+  proposals: KinematicCorrectionProposal[];
+  discoveryResult: KinematicCorrectionProposal | KinematicDiscoveryRefusal | null;
+  correctionPending: boolean;
+  correctionError: Error | null;
+  onDiscover: () => void;
+  onProposalDecision: (
+    proposalId: string,
+    decision: "accept" | "reject" | "reset",
+  ) => void;
 }) {
   if (pending) {
     return <div className="viewer-placeholder"><h3>{copy.filterDetail.loading}</h3></div>;
@@ -2325,13 +2411,28 @@ function FilterDetailView({
         </span>
       </div>
       {detail.stage_id === "kinematic_consistency" && (
-        <KinematicConfigStrip
-          copy={copy}
-          detail={detail}
-          onUrdfUpload={onUrdfUpload}
-          onConfigSave={onConfigSave}
-          saving={configSaving}
-        />
+        <div className="kinematic-workbench">
+          <KinematicCorrectionPanel
+            copy={copy}
+            detail={detail}
+            proposals={proposals}
+            discoveryResult={discoveryResult}
+            pending={correctionPending}
+            error={correctionError}
+            onDiscover={onDiscover}
+            onDecision={onProposalDecision}
+          />
+          <details className="kinematic-advanced" open={proposals.length === 0}>
+            <summary>{copy.kinematics.manualAdvanced}</summary>
+            <KinematicConfigStrip
+              copy={copy}
+              detail={detail}
+              onUrdfUpload={onUrdfUpload}
+              onConfigSave={onConfigSave}
+              saving={configSaving}
+            />
+          </details>
+        </div>
       )}
       {detail.stage_id === "visual_quality" && detail.visual_quality ? (
         <VisualQualityPanel copy={copy} projectId={projectId} detail={detail} />
@@ -2346,6 +2447,155 @@ function FilterDetailView({
         </>
       )}
     </div>
+  );
+}
+
+function KinematicCorrectionPanel({
+  copy,
+  detail,
+  proposals,
+  discoveryResult,
+  pending,
+  error,
+  onDiscover,
+  onDecision,
+}: {
+  copy: Translation;
+  detail: FilterDetail;
+  proposals: KinematicCorrectionProposal[];
+  discoveryResult: KinematicCorrectionProposal | KinematicDiscoveryRefusal | null;
+  pending: boolean;
+  error: Error | null;
+  onDiscover: () => void;
+  onDecision: (
+    proposalId: string,
+    decision: "accept" | "reject" | "reset",
+  ) => void;
+}) {
+  const refusal = discoveryResult && "reason" in discoveryResult ? discoveryResult : null;
+  const hasUrdf = Boolean(detail.parameters.urdf_path);
+  return (
+    <section className="kinematic-correction-panel">
+      <header>
+        <div>
+          <span className="eyebrow">{copy.kinematics.dynamicEyebrow}</span>
+          <strong>{copy.kinematics.dynamicTitle}</strong>
+        </div>
+        <button
+          type="button"
+          className="secondary"
+          onClick={onDiscover}
+          disabled={!hasUrdf || pending}
+        >
+          {pending ? copy.kinematics.discovering : copy.kinematics.discover}
+        </button>
+      </header>
+      {!hasUrdf && <p className="kinematic-hint">{copy.kinematics.uploadFirst}</p>}
+      {error && <p className="kinematic-refusal">{error.message}</p>}
+      {refusal && (
+        <div className="kinematic-refusal" role="alert">
+          <strong>{copy.kinematics.refusalLabels[refusal.reason]}</strong>
+          {refusal.evidence.map((item) => <p key={item}>{item}</p>)}
+        </div>
+      )}
+      {proposals.map((proposal) => (
+        <KinematicProposalCard
+          key={proposal.id}
+          copy={copy}
+          proposal={proposal}
+          pending={pending}
+          onDecision={onDecision}
+        />
+      ))}
+      {detail.series.position_error && detail.series.orientation_error && (
+        <div className="kinematic-preview">
+          <span>{copy.kinematics.preview}</span>
+          <b>{copy.kinematics.positionSeries}: {Math.max(...detail.series.position_error).toFixed(4)} m</b>
+          <b>{copy.kinematics.orientationSeries}: {Math.max(...detail.series.orientation_error).toFixed(4)} rad</b>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function KinematicProposalCard({
+  copy,
+  proposal,
+  pending,
+  onDecision,
+}: {
+  copy: Translation;
+  proposal: KinematicCorrectionProposal;
+  pending: boolean;
+  onDecision: (
+    proposalId: string,
+    decision: "accept" | "reject" | "reset",
+  ) => void;
+}) {
+  const chainNames = proposal.profile.chains.map((chain) => chain.end_effector_frame).join(" · ");
+  const before = proposal.before_held_out;
+  const after = proposal.after_held_out;
+  const degrees = (radians: number) => radians * 180 / Math.PI;
+  return (
+    <article className={`kinematic-proposal ${proposal.status}`}>
+      <header>
+        <div>
+          <strong>{chainNames}</strong>
+          <small>{copy.kinematics.confidence}: {(proposal.confidence * 100).toFixed(1)}%</small>
+        </div>
+        <span>{copy.kinematics.statusLabels[proposal.status]}</span>
+      </header>
+      <div className="kinematic-metrics">
+        <div>
+          <small>{copy.kinematics.positionP95}</small>
+          <b>{before.position.p95.toFixed(4)} m → {after.position.p95.toFixed(4)} m</b>
+        </div>
+        <div>
+          <small>{copy.kinematics.orientationP95}</small>
+          <b>
+            {before.orientation.p95.toFixed(4)} rad ({degrees(before.orientation.p95).toFixed(2)}°)
+            {" → "}{after.orientation.p95.toFixed(4)} rad ({degrees(after.orientation.p95).toFixed(2)}°)
+          </b>
+        </div>
+      </div>
+      <ul className="kinematic-evidence">
+        {proposal.evidence.map((item) => <li key={item}>{item}</li>)}
+      </ul>
+      {proposal.warnings.map((warning) => (
+        <p className="kinematic-warning" key={warning}>{warning}</p>
+      ))}
+      <footer>
+        {proposal.status === "proposed" && (
+          <>
+            <button
+              type="button"
+              onClick={() => onDecision(proposal.id, "accept")}
+              disabled={pending}
+            >
+              {copy.kinematics.accept}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => onDecision(proposal.id, "reject")}
+              disabled={pending}
+            >
+              {copy.kinematics.reject}
+            </button>
+          </>
+        )}
+        {proposal.status === "accepted" && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => onDecision(proposal.id, "reset")}
+            disabled={pending}
+          >
+            {copy.kinematics.reset}
+          </button>
+        )}
+      </footer>
+    </article>
   );
 }
 
@@ -2399,6 +2649,61 @@ function VisualQualityPanel({
           <div><b>{copy.filterDetail.visualFlaggedRate(issueRate)}</b><small>{evidence.issue_sample_count} flagged</small></div>
         </div>
       </section>
+
+      <section className="visual-model-summary">
+        <div>
+          <small>{copy.filterDetail.visualTechnicalScore}</small>
+          <strong>{formatOptionalScore(evidence.technical_score)}</strong>
+        </div>
+        <div>
+          <small>{copy.filterDetail.visualPercentile}</small>
+          <strong>{formatOptionalPercentile(evidence.percentile)}</strong>
+        </div>
+        <div>
+          <small>{copy.filterDetail.visualBackend}</small>
+          <strong>{evidence.requested_backend ?? "auto"} → {evidence.effective_backend ?? "rules"}</strong>
+        </div>
+        <div className={evidence.hard_failure ? "critical" : ""}>
+          <small>{copy.filterDetail.visualHardFailure}</small>
+          <strong>{evidence.hard_failure ? copy.filterDetail.visualYes : copy.filterDetail.visualNo}</strong>
+          {evidence.hard_failure_reasons?.length
+            ? <span>{evidence.hard_failure_reasons.map((reason) => visualIssueLabel(copy, reason)).join(" · ")}</span>
+            : null}
+        </div>
+      </section>
+
+      {evidence.model_status && evidence.model_status !== "scored" && (
+        <div className="visual-model-notice">
+          <strong>{copy.filterDetail.visualModelUnavailable}</strong>
+          <span>{copy.filterDetail.visualModelStatuses[evidence.model_status] ?? evidence.model_status}</span>
+        </div>
+      )}
+
+      {(evidence.camera_scores?.length ?? 0) > 0 && (
+        <section className="visual-camera-score-table">
+          <div className="visual-section-heading"><strong>{copy.filterDetail.visualCameraScores}</strong></div>
+          <table>
+            <thead><tr>
+              <th>{copy.filterDetail.visualCamera}</th>
+              <th>{copy.filterDetail.visualTechnicalScore}</th>
+              <th>{copy.filterDetail.visualPercentile}</th>
+              <th>{copy.filterDetail.visualCohortSize}</th>
+              <th>{copy.filterDetail.visualPriority}</th>
+              <th>{copy.filterDetail.visualModelStatus}</th>
+            </tr></thead>
+            <tbody>{evidence.camera_scores!.map((score) => (
+              <tr key={score.camera} className={`priority-${score.priority}`}>
+                <td>{score.camera}</td>
+                <td>{formatOptionalScore(score.technical_score)}</td>
+                <td>{formatOptionalPercentile(score.percentile)}</td>
+                <td>{score.cohort_size}</td>
+                <td>{copy.filterDetail.visualPriorities[score.priority] ?? score.priority}</td>
+                <td>{copy.filterDetail.visualModelStatuses[score.model_status] ?? score.model_status}{score.error_code ? ` · ${score.error_code}` : ""}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </section>
+      )}
 
       {evidence.incidents.length > 0 && (
         <section className="visual-issue-timeline" aria-label={copy.filterDetail.visualTimeline}>
@@ -2530,7 +2835,10 @@ function VisualIncidentCard({
     >
       <header>
         <div>
-          <span className="visual-issue-pill">{visualIssueLabel(copy, incident.issue)}</span>
+          <span className={`visual-issue-pill ${incident.hard_failure ? "critical" : ""}`}>
+            {visualIssueLabel(copy, incident.issue)}
+            {incident.hard_failure ? ` · ${copy.filterDetail.visualHardFailure}` : ""}
+          </span>
           <strong>{incident.camera}</strong>
         </div>
         <small>{incident.sample_count} {copy.filterDetail.visualSamples}</small>
@@ -2579,6 +2887,14 @@ function VisualIncidentCard({
       </footer>
     </article>
   );
+}
+
+function formatOptionalScore(value: number | null | undefined) {
+  return value == null ? "—" : value.toFixed(3);
+}
+
+function formatOptionalPercentile(value: number | null | undefined) {
+  return value == null ? "—" : `${(value * 100).toFixed(1)}%`;
 }
 
 function VisualMetricsCharts({ detail }: { detail: FilterDetail }) {

@@ -7,7 +7,7 @@ from robot_data_studio.lerobot.models import EpisodeSummary
 
 from .models import CleaningConfig, CleaningSummary, EpisodeQualityResult, VlmSettings, utc_now
 
-SCORER_VERSION = "quality-rules-v2"
+SCORER_VERSION = "quality-rules-v3-visual-technical"
 
 
 class CleaningStateStore:

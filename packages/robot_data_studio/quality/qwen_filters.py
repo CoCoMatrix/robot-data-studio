@@ -3,11 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
-from xml.etree import ElementTree
 
 import numpy as np
 
 from robot_data_studio.lerobot.reader import LeRobotDatasetReader
+from robot_data_studio.quality.kinematics import (
+    JointFieldMapping,
+    KinematicChainProfile,
+    KinematicProfile,
+    PinocchioKinematics,
+    PoseFieldMapping,
+    SE3ResidualResult,
+)
 
 
 ArrayLike = np.ndarray | list[list[float]]
@@ -56,6 +63,8 @@ class KinematicsConfig:
     position_tolerance: float = 0.05
     resolve_tcp_offset: bool = True
     tcp_offset: tuple[float, float, float] | None = None
+    orientation_tolerance: float = 0.1
+    profile: KinematicProfile | None = None
 
 
 @dataclass(frozen=True)
@@ -507,99 +516,43 @@ def rotation_matrix_from_rpy(roll: float, pitch: float, yaw: float) -> np.ndarra
     return rz @ ry @ rx
 
 
-def _transform_from_xyz_rpy(xyz: np.ndarray, rpy: np.ndarray) -> np.ndarray:
-    transform = np.eye(4, dtype=np.float64)
-    transform[:3, :3] = rotation_matrix_from_rpy(float(rpy[0]), float(rpy[1]), float(rpy[2]))
-    transform[:3, 3] = xyz
-    return transform
-
-
-def _axis_rotation(axis: np.ndarray, angle: float) -> np.ndarray:
-    axis = axis / max(float(np.linalg.norm(axis)), 1e-12)
-    x, y, z = axis
-    c, s = np.cos(angle), np.sin(angle)
-    one_c = 1 - c
-    return np.asarray(
-        [
-            [c + x * x * one_c, x * y * one_c - z * s, x * z * one_c + y * s],
-            [y * x * one_c + z * s, c + y * y * one_c, y * z * one_c - x * s],
-            [z * x * one_c - y * s, z * y * one_c + x * s, c + z * z * one_c],
-        ],
-        dtype=np.float64,
-    )
-
-
-def _motion_transform(joint_type: str, axis: np.ndarray, value: float) -> np.ndarray:
-    transform = np.eye(4, dtype=np.float64)
-    if joint_type in {"revolute", "continuous"}:
-        transform[:3, :3] = _axis_rotation(axis, value)
-    elif joint_type == "prismatic":
-        transform[:3, 3] = axis * value
-    return transform
-
-
-@dataclass(frozen=True)
-class _UrdfJoint:
-    name: str
-    joint_type: str
-    parent: str
-    child: str
-    origin_xyz: np.ndarray
-    origin_rpy: np.ndarray
-    axis: np.ndarray
-
-
-def _parse_float_vector(text: str | None, default: tuple[float, float, float]) -> np.ndarray:
-    if not text:
-        return np.asarray(default, dtype=np.float64)
-    return np.asarray([float(item) for item in text.split()], dtype=np.float64)
-
-
-def _load_urdf_chain(path: Path, end_effector_link: str) -> list[_UrdfJoint]:
-    root = ElementTree.parse(path).getroot()
-    joints_by_child = {}
-    for joint in root.findall("joint"):
-        origin = joint.find("origin")
-        axis = joint.find("axis")
-        parsed = _UrdfJoint(
-            name=joint.attrib["name"],
-            joint_type=joint.attrib.get("type", "fixed"),
-            parent=joint.find("parent").attrib["link"],  # type: ignore[union-attr]
-            child=joint.find("child").attrib["link"],  # type: ignore[union-attr]
-            origin_xyz=_parse_float_vector(origin.attrib.get("xyz") if origin is not None else None, (0, 0, 0)),
-            origin_rpy=_parse_float_vector(origin.attrib.get("rpy") if origin is not None else None, (0, 0, 0)),
-            axis=_parse_float_vector(axis.attrib.get("xyz") if axis is not None else None, (1, 0, 0)),
-        )
-        joints_by_child[parsed.child] = parsed
-    chain = []
-    current = end_effector_link
-    while current in joints_by_child:
-        joint = joints_by_child[current]
-        chain.append(joint)
-        current = joint.parent
-    if not chain:
-        raise ValueError(f"End-effector link {end_effector_link!r} was not found in {path}")
-    return list(reversed(chain))
-
-
 def _fk_positions(joint_states: np.ndarray, config: KinematicsConfig) -> np.ndarray:
     if config.urdf_path is None or config.end_effector_link is None:
         raise ValueError("URDF path and end-effector link are required for kinematic consistency")
-    chain = _load_urdf_chain(Path(config.urdf_path), config.end_effector_link)
-    joint_index = {name: index for index, name in enumerate(config.joint_names)}
-    positions = []
-    for row in joint_states:
-        transform = np.eye(4, dtype=np.float64)
-        for joint in chain:
-            transform = transform @ _transform_from_xyz_rpy(joint.origin_xyz, joint.origin_rpy)
-            if joint.name in joint_index:
-                transform = transform @ _motion_transform(
-                    joint.joint_type,
-                    joint.axis,
-                    float(row[joint_index[joint.name]]),
-                )
-        positions.append(transform[:3, 3].copy())
-    return np.asarray(positions, dtype=np.float64)
+    joints = _as_2d_float(joint_states)
+    if joints.shape[1] != len(config.joint_names):
+        raise ValueError("joint state width must match the configured URDF joint names")
+    dummy_pose = np.zeros((len(joints), 7), dtype=np.float64)
+    dummy_pose[:, -1] = 1.0
+    states = np.concatenate((joints, dummy_pose), axis=1)
+    pose_start = joints.shape[1]
+    chain = KinematicChainProfile(
+        id="legacy_qwen_s4",
+        end_effector_frame=config.end_effector_link,
+        joints=[
+            JointFieldMapping(urdf_joint=name, state_index=index)
+            for index, name in enumerate(config.joint_names)
+        ],
+        logged_pose=PoseFieldMapping(
+            position_indices=(pose_start, pose_start + 1, pose_start + 2),
+            orientation_indices=(
+                pose_start + 3,
+                pose_start + 4,
+                pose_start + 5,
+                pose_start + 6,
+            ),
+            orientation_representation="quaternion_xyzw",
+        ),
+    )
+    return PinocchioKinematics(config.urdf_path).predict_chain(states, chain)[:, :3, 3]
+
+
+def evaluate_kinematic_profile(
+    states: ArrayLike,
+    profile: KinematicProfile,
+) -> dict[str, SE3ResidualResult]:
+    """Evaluate Qwen S4 with the exact SE(3) engine used by Data Studio."""
+    return PinocchioKinematics(profile.urdf_path).evaluate(_as_2d_float(states), profile)
 
 
 def evaluate_kinematic_consistency(
@@ -703,7 +656,20 @@ class QwenManipDataFilter:
             )
             skipped = {}
             s4_frames: list[int] = []
-            if self.config.kinematics.urdf_path is None:
+            if self.config.kinematics.profile is not None:
+                profile_results = evaluate_kinematic_profile(
+                    states,
+                    self.config.kinematics.profile,
+                )
+                flagged = np.zeros(len(states), dtype=bool)
+                for result in profile_results.values():
+                    flagged |= result.position_errors > self.config.kinematics.position_tolerance
+                    flagged |= (
+                        result.orientation_errors
+                        > self.config.kinematics.orientation_tolerance
+                    )
+                s4_frames = np.flatnonzero(flagged).astype(int).tolist()
+            elif self.config.kinematics.urdf_path is None:
                 skipped["s4_kinematic_consistency"] = "URDF path was not provided."
             elif not self.config.kinematics.end_effector_link:
                 skipped["s4_kinematic_consistency"] = "End-effector link was not provided."

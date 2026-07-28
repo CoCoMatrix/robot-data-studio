@@ -17,7 +17,15 @@ from robot_data_studio.quality.qwen_filters import (
     detect_state_action_trend_alignment,
     detect_sudden_changes,
     evaluate_kinematic_consistency,
+    evaluate_kinematic_profile,
     rotation_matrix_from_rpy,
+)
+from robot_data_studio.quality.kinematics import (
+    JointFieldMapping,
+    KinematicChainProfile,
+    KinematicProfile,
+    PinocchioKinematics,
+    PoseFieldMapping,
 )
 
 
@@ -138,6 +146,7 @@ def test_s4_kinematic_consistency_loads_urdf_and_resolves_constant_tcp_offset(tm
     <child link="link1"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="10" velocity="2"/>
   </joint>
   <joint name="joint2" type="fixed">
     <parent link="link1"/>
@@ -167,6 +176,43 @@ def test_s4_kinematic_consistency_loads_urdf_and_resolves_constant_tcp_offset(tm
     assert np.allclose(result.tcp_offset, [0.1, 0.2, 0.0])
     assert result.max_position_error <= 1e-6
     assert not result.flagged_frames
+
+
+def test_qwen_full_se3_profile_matches_shared_product_engine() -> None:
+    urdf = Path("tests/quality/kinematics/fixtures/nonstandard_robot.urdf").resolve()
+    profile = KinematicProfile(
+        urdf_path=str(urdf),
+        chains=[
+            KinematicChainProfile(
+                id="arm",
+                end_effector_frame="prism_mount",
+                joints=[JointFieldMapping(urdf_joint="alpha_axis", state_index=0)],
+                logged_pose=PoseFieldMapping(
+                    position_indices=(1, 2, 3),
+                    orientation_indices=(4, 5, 6, 7),
+                    orientation_representation="quaternion_xyzw",
+                ),
+            )
+        ],
+    )
+    engine = PinocchioKinematics(urdf)
+    seed = np.zeros((9, 8), dtype=np.float64)
+    seed[:, 0] = np.linspace(-0.7, 0.8, len(seed))
+    seed[:, 7] = 1.0
+    predicted = engine.predict_chain(seed, profile.chains[0])
+    states = seed.copy()
+    states[:, 1:4] = predicted[:, :3, 3]
+    states[:, 4:8] = np.asarray(
+        [engine.pin.Quaternion(transform[:3, :3]).coeffs() for transform in predicted]
+    )
+
+    qwen = evaluate_kinematic_profile(states, profile)
+    product = engine.evaluate(states, profile)
+
+    assert np.array_equal(qwen["arm"].position_errors, product["arm"].position_errors)
+    assert np.array_equal(qwen["arm"].orientation_errors, product["arm"].orientation_errors)
+    assert qwen["arm"].position == product["arm"].position
+    assert qwen["arm"].orientation == product["arm"].orientation
 
 
 def test_s5_orientation_alignment_applies_dataset_rotation_to_positions_and_6d_orientation() -> None:

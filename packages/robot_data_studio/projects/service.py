@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 from uuid import uuid4
+
+import numpy as np
 
 from robot_data_studio.formats import ExportResult, FormatRegistry
 from robot_data_studio.formats.models import DatasetAdapter
@@ -19,12 +22,28 @@ from robot_data_studio.quality import (
     FilterKinematicsConfig,
     FilterRun,
     FilterSummary,
+    KinematicDiscoveryRequest,
+    KinematicProposalDecision,
     VlmSettings,
+)
+from robot_data_studio.quality.kinematics import (
+    CorrectionOptions,
+    CorrectionProposal,
+    CorrectedDatasetAdapter,
+    DiscoveryRefusal,
+    DiscoveryRequest,
+    discover_profile,
+    fit_correction,
 )
 from robot_data_studio.quality.filter_service import (
     DatasetFilterService,
     ProgressCallback,
     infer_gripper_indices,
+)
+from robot_data_studio.quality.dover_backend import (
+    VideoTechnicalScore,
+    checkpoint_file_info,
+    visual_quality_fingerprint,
 )
 from robot_data_studio.quality.models import utc_now
 from robot_data_studio.quality.store import CleaningStateStore, VlmSettingsStore, build_summary
@@ -88,8 +107,10 @@ class ProjectService:
         output = output_base / f"{project_id}-{format_id}"
         if len(episode_indexes) == 1:
             output = output_base / f"{project_id}-episode-{episode_indexes[0]:06d}-{format_id}"
+        self._invalidate_active_kinematics_if_stale(project_id)
+        adapter = self._export_adapter(project_id)
         return self._formats.export_dataset(
-            adapter=self.reader(project_id),
+            adapter=adapter,
             target_format=format_id,
             episode_indexes=episode_indexes,
             output_root=output,
@@ -260,7 +281,16 @@ class ProjectService:
             filter_config = filter_config.model_copy(
                 update={"enabled_filter_stages": enabled_filter_stages}
             )
-        result = DatasetFilterService(self.reader(project_id), filter_config).run(
+        cohort_baseline = (
+            self._load_visual_quality_baseline(project_id, filter_config)
+            if episode_indexes is not None
+            else []
+        )
+        result = DatasetFilterService(
+            self.reader(project_id),
+            filter_config,
+            cohort_baseline=cohort_baseline,
+        ).run(
             on_progress=on_progress,
             episode_indexes=episode_indexes,
         )
@@ -269,6 +299,8 @@ class ProjectService:
                 result.summary.model_dump_json(indent=2),
                 encoding="utf-8",
             )
+            if "visual_quality" in filter_config.enabled_filter_stages:
+                self._save_visual_quality_artifacts(project_id, filter_config, result)
         return result
 
     def filter_summary(self, project_id: str) -> FilterSummary:
@@ -291,7 +323,34 @@ class ProjectService:
         }
         if stage_id not in allowed:
             raise KeyError(f"Filter stage {stage_id!r} not found")
-        return self._filter_service(project_id).detail(stage_id, episode_index)  # type: ignore[arg-type]
+        if stage_id == "visual_quality":
+            artifact = self._load_visual_quality_artifact(project_id, episode_index)
+            if artifact is not None:
+                return artifact
+        if stage_id == "kinematic_consistency":
+            self._invalidate_active_kinematics_if_stale(project_id)
+        detail = self._filter_service(project_id).detail(stage_id, episode_index)  # type: ignore[arg-type]
+        if stage_id == "kinematic_consistency":
+            accepted_id = self.filter_config(project_id).kinematics.accepted_proposal_id
+            accepted = next(
+                (item for item in self.kinematic_proposals(project_id) if item.id == accepted_id),
+                None,
+            )
+            if accepted is not None:
+                parameters = {
+                    **detail.parameters,
+                    "accepted_proposal": {
+                        "id": accepted.id,
+                        "fingerprint": accepted.fingerprint,
+                        "confidence": accepted.confidence,
+                        "evidence": accepted.evidence,
+                        "warnings": accepted.warnings,
+                        "before_held_out": accepted.before_held_out.model_dump(mode="json"),
+                        "after_held_out": accepted.after_held_out.model_dump(mode="json"),
+                    },
+                }
+                detail = detail.model_copy(update={"parameters": parameters})
+        return detail
 
     def visual_quality_frame(
         self,
@@ -331,12 +390,26 @@ class ProjectService:
     def update_filter_config(self, project_id: str, patch: FilterConfigPatch) -> FilterConfig:
         config = self.filter_config(project_id)
         update = {}
+        mapping_fields = {
+            "urdf_path",
+            "end_effector_link",
+            "joint_names",
+            "joint_state_indices",
+            "eef_position_indices",
+            "eef_orientation_indices",
+            "eef_orientation_representation",
+            "profile",
+        }
+        mapping_changed = patch.kinematics is not None and bool(
+            mapping_fields.intersection(patch.kinematics.model_fields_set)
+        )
         if patch.gripper_indices is not None:
             update["gripper_indices"] = patch.gripper_indices
         if patch.kinematics is not None:
-            update["kinematics"] = config.kinematics.model_copy(
-                update=patch.kinematics.model_dump(exclude_unset=True)
-            )
+            kinematic_update = patch.kinematics.model_dump(exclude_unset=True)
+            if mapping_changed and "profile" not in kinematic_update:
+                kinematic_update.update({"profile": None, "accepted_proposal_id": None})
+            update["kinematics"] = config.kinematics.model_copy(update=kinematic_update)
         if patch.visual_quality is not None:
             update["visual_quality"] = config.visual_quality.model_copy(
                 update=patch.visual_quality.model_dump(exclude_unset=True)
@@ -352,6 +425,8 @@ class ProjectService:
         updated = config.model_copy(update=update)
         self._save_filter_config(project_id, updated)
         self._remember_filter_config(project_id, updated)
+        if mapping_changed:
+            self._mark_kinematic_proposals_stale(project_id)
         return updated
 
     def save_filter_urdf(self, project_id: str, filename: str, content: bytes) -> dict[str, str]:
@@ -363,11 +438,159 @@ class ProjectService:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_bytes(content)
         config = self.filter_config(project_id)
-        updated_kinematics = config.kinematics.model_copy(update={"urdf_path": str(output)})
+        updated_kinematics = config.kinematics.model_copy(
+            update={
+                "urdf_path": str(output),
+                "profile": None,
+                "accepted_proposal_id": None,
+            }
+        )
         updated = config.model_copy(update={"kinematics": updated_kinematics})
         self._save_filter_config(project_id, updated)
         self._remember_filter_config(project_id, updated)
+        self._mark_kinematic_proposals_stale(project_id)
         return {"filename": safe_name, "path": str(output)}
+
+    def discover_kinematic_corrections(
+        self,
+        project_id: str,
+        request: KinematicDiscoveryRequest,
+    ) -> CorrectionProposal | DiscoveryRefusal:
+        config = self.filter_config(project_id).kinematics
+        if not config.urdf_path:
+            raise ValueError("Upload a URDF before running kinematic discovery")
+        reader = self.reader(project_id)
+        available = [episode.episode_index for episode in reader.list_episodes()]
+        indexes = request.episode_indexes or available[: min(len(available), 4)]
+        if not indexes:
+            raise ValueError("The dataset has no episodes to inspect")
+        invalid = sorted(set(indexes) - set(available))
+        if invalid:
+            raise ValueError(f"Unknown episode indexes: {invalid}")
+        rows = [
+            frame.observation_state
+            for episode_index in indexes
+            for frame in reader.read_episode_frames(episode_index)
+        ]
+        states = np.asarray(rows, dtype=np.float64)
+        feature_names = self._state_feature_names(project_id, states.shape[1])
+        candidates = discover_profile(
+            config.urdf_path,
+            DiscoveryRequest(
+                states=states,
+                feature_names=feature_names,
+                max_candidates=request.max_candidates,
+                sample_count=request.sample_count,
+                max_joint_mappings=request.max_joint_mappings,
+            ),
+        )
+        result = fit_correction(
+            states,
+            candidates,
+            CorrectionOptions(
+                allow_base=request.allow_base,
+                allow_tcp=request.allow_tcp,
+                allow_joint_sign=request.allow_joint_sign,
+                allow_joint_offset=request.allow_joint_offset,
+                min_candidate_margin=request.min_candidate_margin,
+                position_tolerance=config.position_tolerance,
+                orientation_tolerance=config.orientation_tolerance,
+            ),
+        )
+        if isinstance(result, CorrectionProposal):
+            fingerprint = self._kinematic_source_fingerprint(
+                Path(config.urdf_path), states, feature_names
+            )
+            profile = result.profile.model_copy(update={"fingerprint": fingerprint})
+            proposal_id = hashlib.sha256(
+                (profile.model_dump_json() + fingerprint).encode("utf-8")
+            ).hexdigest()[:16]
+            result = result.model_copy(
+                update={
+                    "id": proposal_id,
+                    "fingerprint": fingerprint,
+                    "profile": profile,
+                    "source_episode_indexes": indexes,
+                }
+            )
+            proposals = [item for item in self.kinematic_proposals(project_id) if item.id != result.id]
+            proposals.append(result)
+            self._save_kinematic_proposals(project_id, proposals)
+        return result
+
+    def kinematic_proposals(self, project_id: str) -> list[CorrectionProposal]:
+        self.project(project_id)
+        path = self._kinematic_proposals_store(project_id)
+        if not path.is_file():
+            return []
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return [CorrectionProposal.model_validate(item) for item in payload]
+
+    def decide_kinematic_proposal(
+        self,
+        project_id: str,
+        proposal_id: str,
+        request: KinematicProposalDecision,
+    ) -> CorrectionProposal:
+        proposals = self.kinematic_proposals(project_id)
+        selected = next((item for item in proposals if item.id == proposal_id), None)
+        if selected is None:
+            raise KeyError(f"Kinematic proposal {proposal_id!r} not found")
+        if not self._kinematic_proposal_is_current(project_id, selected):
+            proposals = [
+                item.model_copy(update={"status": "stale"})
+                if item.id == proposal_id else item
+                for item in proposals
+            ]
+            self._save_kinematic_proposals(project_id, proposals)
+            selected = next(item for item in proposals if item.id == proposal_id)
+            self._deactivate_kinematic_profile(project_id, proposal_id)
+        if selected.status == "stale" and request.decision == "accept":
+            raise ValueError("A stale kinematic proposal cannot be accepted; run discovery again")
+
+        if request.decision == "accept":
+            proposals = [
+                item.model_copy(
+                    update={"status": "accepted" if item.id == proposal_id else (
+                        "rejected" if item.status == "accepted" else item.status
+                    )}
+                )
+                for item in proposals
+            ]
+            config = self.filter_config(project_id)
+            selected = next(item for item in proposals if item.id == proposal_id)
+            kinematics = config.kinematics.model_copy(
+                update={
+                    "profile": selected.profile,
+                    "accepted_proposal_id": selected.id,
+                    "urdf_path": selected.profile.urdf_path,
+                }
+            )
+            updated = config.model_copy(update={"kinematics": kinematics})
+            self._save_filter_config(project_id, updated)
+            self._remember_filter_config(project_id, updated)
+        elif request.decision == "reject":
+            proposals = [
+                item.model_copy(update={"status": "rejected"})
+                if item.id == proposal_id else item
+                for item in proposals
+            ]
+        else:
+            proposals = [
+                item.model_copy(update={"status": "proposed"})
+                if item.id == proposal_id else item
+                for item in proposals
+            ]
+            config = self.filter_config(project_id)
+            if config.kinematics.accepted_proposal_id == proposal_id:
+                kinematics = config.kinematics.model_copy(
+                    update={"profile": None, "accepted_proposal_id": None}
+                )
+                updated = config.model_copy(update={"kinematics": kinematics})
+                self._save_filter_config(project_id, updated)
+                self._remember_filter_config(project_id, updated)
+        self._save_kinematic_proposals(project_id, proposals)
+        return next(item for item in proposals if item.id == proposal_id)
 
     def _entry(self, project_id: str) -> tuple[Project, DatasetAdapter]:
         try:
@@ -396,6 +619,275 @@ class ProjectService:
 
     def _filter_summary_store(self, project_id: str) -> Path:
         return self.project_artifact_dir(project_id) / "filter_summary.json"
+
+    def _kinematic_proposals_store(self, project_id: str) -> Path:
+        return self.project_artifact_dir(project_id) / "filters" / "kinematic_proposals.json"
+
+    def _save_kinematic_proposals(
+        self,
+        project_id: str,
+        proposals: list[CorrectionProposal],
+    ) -> None:
+        path = self._kinematic_proposals_store(project_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps([item.model_dump(mode="json") for item in proposals], indent=2),
+            encoding="utf-8",
+        )
+
+    def _mark_kinematic_proposals_stale(self, project_id: str) -> None:
+        proposals = self.kinematic_proposals(project_id)
+        if not proposals:
+            return
+        self._save_kinematic_proposals(
+            project_id,
+            [item.model_copy(update={"status": "stale"}) for item in proposals],
+        )
+
+    def _invalidate_active_kinematics_if_stale(self, project_id: str) -> None:
+        config = self.filter_config(project_id)
+        proposal_id = config.kinematics.accepted_proposal_id
+        if not proposal_id:
+            return
+        proposals = self.kinematic_proposals(project_id)
+        proposal = next((item for item in proposals if item.id == proposal_id), None)
+        if proposal is not None and self._kinematic_proposal_is_current(project_id, proposal):
+            return
+        if proposal is not None and proposal.status != "stale":
+            self._save_kinematic_proposals(
+                project_id,
+                [
+                    item.model_copy(update={"status": "stale"})
+                    if item.id == proposal_id else item
+                    for item in proposals
+                ],
+            )
+        self._deactivate_kinematic_profile(project_id, proposal_id)
+
+    def _kinematic_proposal_is_current(
+        self,
+        project_id: str,
+        proposal: CorrectionProposal,
+    ) -> bool:
+        if proposal.status == "stale":
+            return False
+        if not proposal.source_episode_indexes:
+            return True
+        try:
+            current_states = np.asarray(
+                [
+                    frame.observation_state
+                    for episode_index in proposal.source_episode_indexes
+                    for frame in self.reader(project_id).read_episode_frames(episode_index)
+                ],
+                dtype=np.float64,
+            )
+            current_names = self._state_feature_names(project_id, current_states.shape[1])
+            current_fingerprint = self._kinematic_source_fingerprint(
+                Path(proposal.profile.urdf_path), current_states, current_names
+            )
+        except (KeyError, OSError, ValueError):
+            return False
+        return current_fingerprint == proposal.fingerprint
+
+    def _deactivate_kinematic_profile(self, project_id: str, proposal_id: str) -> None:
+        config = self.filter_config(project_id)
+        if config.kinematics.accepted_proposal_id != proposal_id:
+            return
+        kinematics = config.kinematics.model_copy(
+            update={"profile": None, "accepted_proposal_id": None}
+        )
+        updated = config.model_copy(update={"kinematics": kinematics})
+        self._save_filter_config(project_id, updated)
+        self._remember_filter_config(project_id, updated)
+
+    def _state_feature_names(self, project_id: str, width: int) -> list[str]:
+        feature = self.project(project_id).dataset.features.get("observation.state", {})
+        names = feature.get("names", {}) if isinstance(feature, dict) else {}
+        if isinstance(names, dict):
+            flattened = [str(name) for group in names.values() if isinstance(group, list) for name in group]
+        elif isinstance(names, list):
+            flattened = [str(name) for name in names]
+        else:
+            flattened = []
+        return flattened if len(flattened) == width else [f"state_{index}" for index in range(width)]
+
+    @staticmethod
+    def _kinematic_source_fingerprint(
+        urdf_path: Path,
+        states: np.ndarray,
+        feature_names: list[str],
+    ) -> str:
+        digest = hashlib.sha256()
+        digest.update(urdf_path.read_bytes())
+        contiguous = np.ascontiguousarray(states, dtype=np.float64)
+        digest.update(repr(contiguous.shape).encode("utf-8"))
+        digest.update(contiguous.tobytes())
+        digest.update("\0".join(feature_names).encode("utf-8"))
+        return digest.hexdigest()
+
+    def _export_adapter(self, project_id: str):
+        source = self.reader(project_id)
+        config = self.filter_config(project_id).kinematics
+        if config.profile is None or not config.accepted_proposal_id:
+            return source
+        proposal = next(
+            (
+                item
+                for item in self.kinematic_proposals(project_id)
+                if item.id == config.accepted_proposal_id and item.status == "accepted"
+            ),
+            None,
+        )
+        if proposal is None or not self._kinematic_proposal_is_current(project_id, proposal):
+            return source
+        manifest = {
+            "proposal_id": proposal.id,
+            "fingerprint": proposal.fingerprint,
+            "profile": proposal.profile.model_dump(mode="json"),
+            "confidence": proposal.confidence,
+            "evidence": proposal.evidence,
+            "warnings": proposal.warnings,
+            "before_training": proposal.before_training.model_dump(mode="json"),
+            "after_training": proposal.after_training.model_dump(mode="json"),
+            "before_held_out": proposal.before_held_out.model_dump(mode="json"),
+            "after_held_out": proposal.after_held_out.model_dump(mode="json"),
+        }
+        return CorrectedDatasetAdapter(source, config.profile, manifest)
+
+    def _visual_quality_artifact_dir(self, project_id: str) -> Path:
+        return self.project_artifact_dir(project_id) / "filters" / "visual-quality"
+
+    def _save_visual_quality_artifacts(
+        self,
+        project_id: str,
+        config: FilterConfig,
+        result: FilterRun,
+    ) -> None:
+        output_dir = self._visual_quality_artifact_dir(project_id)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        fingerprint = self._visual_quality_fingerprint(project_id, config)
+        checkpoint = checkpoint_file_info(config.visual_quality)
+        baseline: list[dict[str, object]] = []
+        for episode_index, detail in result.visual_quality_details.items():
+            visual = detail.visual_quality
+            if visual is None:
+                continue
+            visual = visual.model_copy(update={"artifact_fingerprint": fingerprint})
+            persisted = detail.model_copy(update={"visual_quality": visual})
+            payload = {
+                "fingerprint": fingerprint,
+                "checkpoint": checkpoint,
+                "detail": persisted.model_dump(mode="json"),
+            }
+            self._atomic_write_json(
+                output_dir / f"episode-{episode_index:06d}.json",
+                payload,
+            )
+            for score in visual.camera_scores:
+                if score.technical_score is not None:
+                    baseline.append(
+                        {
+                            "episode_index": episode_index,
+                            "camera": score.camera,
+                            "technical_score": score.technical_score,
+                            "error_code": None,
+                        }
+                    )
+        self._atomic_write_json(
+            output_dir / "baseline.json",
+            {
+                "fingerprint": fingerprint,
+                "checkpoint": checkpoint,
+                "scores": baseline,
+            },
+        )
+        expected = {
+            output_dir / f"episode-{episode_index:06d}.json"
+            for episode_index in result.visual_quality_details
+        }
+        for stale in output_dir.glob("episode-*.json"):
+            if stale not in expected:
+                stale.unlink()
+
+    def _load_visual_quality_artifact(
+        self,
+        project_id: str,
+        episode_index: int,
+    ) -> FilterDetail | None:
+        config = self.filter_config(project_id)
+        path = self._visual_quality_artifact_dir(project_id) / f"episode-{episode_index:06d}.json"
+        if not path.is_file():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("fingerprint") != self._visual_quality_fingerprint(project_id, config):
+                return None
+            return FilterDetail.model_validate(payload["detail"])
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def _load_visual_quality_baseline(
+        self,
+        project_id: str,
+        config: FilterConfig,
+    ) -> list[VideoTechnicalScore]:
+        path = self._visual_quality_artifact_dir(project_id) / "baseline.json"
+        if not path.is_file():
+            return []
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("fingerprint") != self._visual_quality_fingerprint(project_id, config):
+                return []
+            return [VideoTechnicalScore(**item) for item in payload.get("scores", [])]
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            return []
+
+    @staticmethod
+    def _atomic_write_json(path: Path, payload: dict[str, object]) -> None:
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        temporary.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        temporary.replace(path)
+
+    def _visual_quality_fingerprint(self, project_id: str, config: FilterConfig) -> str:
+        reader = self.reader(project_id)
+        episodes = []
+        for episode in reader.list_episodes():
+            videos = []
+            for camera, relative_path in sorted((episode.video_files or {}).items()):
+                videos.append(
+                    {
+                        "camera": camera,
+                        "path": relative_path,
+                        "start": episode.video_start_seconds.get(camera),
+                        "end": episode.video_end_seconds.get(camera),
+                        "file": self._source_file_info(reader.root / relative_path),
+                    }
+                )
+            episodes.append(
+                {
+                    "episode_index": episode.episode_index,
+                    "length": episode.length,
+                    "duration_seconds": episode.duration_seconds,
+                    "data_file": episode.data_file,
+                    "data_file_info": self._source_file_info(reader.root / episode.data_file),
+                    "videos": videos,
+                }
+            )
+        payload = {
+            "visual_config": visual_quality_fingerprint(config.visual_quality),
+            "dataset": reader.metadata().model_dump(mode="json"),
+            "episodes": episodes,
+        }
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
+    @staticmethod
+    def _source_file_info(path: Path) -> dict[str, int | None]:
+        if not path.is_file():
+            return {"size": None, "mtime_ns": None}
+        stat = path.stat()
+        return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
 
     def _infer_kinematics_config(self, project_id: str) -> FilterKinematicsConfig:
         metadata = self.project(project_id).dataset

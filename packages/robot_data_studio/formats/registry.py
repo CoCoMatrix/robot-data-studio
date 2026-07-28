@@ -112,6 +112,11 @@ class FormatRegistry:
             field_mapping=mapping,
             backend=backend,
             metadata_completeness=build_metadata_inspection_report(adapter),
+            kinematic_correction=(
+                adapter.kinematic_correction_manifest()
+                if hasattr(adapter, "kinematic_correction_manifest")
+                else None
+            ),
         )
         report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         return ExportResult(

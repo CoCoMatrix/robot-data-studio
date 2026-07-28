@@ -169,6 +169,42 @@ data/samples/lerobot-pusht
 时间不同步、Action 跳变和 VLM 失败。右上角的 `VLM 设置` 可以直接设置 provider、model 和是否启用
 VLM 检查；当前前端会把这些参数随清洗请求发送给本地 API，后续可在后端 scorer adapter 中接入真实 VLM。
 
+## 8.1 动态运动学一致性与修正
+
+打开 `Kinematic consistency`，先导入 URDF，再点击 `自动发现修正`。系统不依赖固定的 `tool0`、`eef` 或厂商字段名，而是枚举 URDF 运动链与数据列组合，用 held-out SE(3) 残差选择 profile：
+
+- position residual 单位为米；
+- orientation residual 同时显示弧度和角度；
+- 支持 quaternion xyzw/wxyz、rotation 6D、rotation matrix、rotation vector 与 RPY；
+- 可建议 base/TCP transform、joint sign 与 joint zero offset；
+- 双臂或多臂 profile 按 chain 独立保存和评估。
+
+先查看 before/after p95、confidence、candidate margin、evidence 和 warnings。`ambiguous`、`insufficient_excitation`、`no_candidates` 或 `fit_failed` 都是安全拒绝：补充更有激励的轨迹或明确映射后重跑，不要直接降低阈值。点击接受前会再次确认；URDF、数据或映射变化后旧 proposal 自动变为 stale。
+
+接受只更新项目 profile。Filter 预览和导出会用修正后的 FK 重算派生 EEF pose，但不会改写源数据。`conversion_report.json` 会带上 proposal ID、fingerprint、profile 和 held-out 指标。高级用户仍可展开 `手动配置（高级）` 使用旧 XYZ-only 兼容路径；没有姿态字段时不要把结果称为完整 SE(3)。
+
+命令行使用同一套 engine：
+
+```bash
+python scripts/qwen_filter_dataset.py /path/to/dataset \
+  --urdf /path/to/robot.urdf \
+  --discover-kinematics \
+  --proposal-output /path/to/proposal.json
+```
+
+Codex 中可调用已安装的 `$align-robot-kinematics` skill。它的 wrapper 接受 repository、dataset、URDF、sample budget 和 output path，输出与 API 相同的 proposal/refusal JSON，并要求在接受前先人工授权。
+
+### Astribot / 星尘智能 S1 验证清单
+
+当前代码只在仓库的任意命名合成 URDF fixture 上通过，**尚未对未来提供的 S1 URDF 宣称验证通过**。拿到 S1 URDF 与一段包含末端姿态、关节充分运动的数据后：
+
+1. 用 skill wrapper 生成 proposal，确认没有厂商 link 名硬编码；
+2. 核对每条 arm chain、joint/state index、pose representation 和 frame；
+3. 检查 held-out position/orientation before→after 与歧义警告；
+4. 在 UI 预览后再接受；
+5. 导出一份小样，核对源文件前后 SHA-256 不变，并检查 `conversion_report.json` correction manifest；
+6. 若 S1 轨迹接近静止或候选近似等价，保留拒绝结果并补采 excitation trajectory。
+
 ## 9. 用 Rerun 回放 episode
 
 选择一个 episode 后，点击 Rerun 回放按钮。
@@ -333,3 +369,35 @@ ls -lh .rds-artifacts/*.hdf5
 - 数据集报告：每个数据集自动生成质量 summary 和可导出的 report
 
 第一版的目标不是把所有功能堆满，而是先把“导入 → 可视化回放 → 导出”这条最核心的闭环跑稳。
+
+## 13. Visual Quality 与 DOVER-Mobile
+
+Visual Quality 默认使用 `auto` backend：规则扫描始终运行；只有显式配置独立 Python 与本地 checkpoint 后，才会批量运行 DOVER-Mobile technical quality。RDS 不会自动下载、打包或提交模型权重。
+
+内部非商业环境可固定使用 DOVER 官方仓库 commit `f1ddc96215bc7fbcf8f315c65d47905f339c3419`，并在隔离环境中安装依赖：
+
+```bash
+git clone https://github.com/VQAssessment/DOVER.git
+cd DOVER
+git checkout f1ddc96215bc7fbcf8f315c65d47905f339c3419
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+在项目的 `filter_config.json` 中配置本机绝对路径：
+
+```json
+{
+  "visual_quality": {
+    "backend": "dover_mobile",
+    "dover_python_path": "/absolute/path/to/DOVER/.venv/bin/python",
+    "checkpoint_path": "/absolute/path/to/DOVER-Mobile.pth",
+    "model_device": "cuda",
+    "batch_size": 8
+  }
+}
+```
+
+CPU 模式会自动将实际 batch size 限制为 1。runner 只执行 technical 分支；单相机失败会标记为 partial，runner 整体失败则回退 rules，filter run 仍会成功。完整 run 会写入带配置/checkpoint fingerprint 的 episode detail 和 camera cohort baseline；单 episode 重跑只复用最近一次匹配的完整 baseline。
+
+DOVER 官方仓库使用非商业许可证，部署前请核对 [DOVER 仓库](https://github.com/VQAssessment/DOVER) 与 [S-Lab License](https://raw.githubusercontent.com/VQAssessment/DOVER/master/LICENSE)。

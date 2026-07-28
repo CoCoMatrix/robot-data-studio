@@ -14,9 +14,12 @@ from .filter_models import (
     FilterConfigPatch,
     FilterDetail,
     FilterKinematicsConfig,
+    KinematicDiscoveryRequest,
+    KinematicProposalDecision,
     FilterRun,
     FilterSummary,
     FilterVisualQualityConfig,
+    VisualCameraScore,
 )
 
 __all__ = [
@@ -30,9 +33,12 @@ __all__ = [
     "FilterConfigPatch",
     "FilterDetail",
     "FilterKinematicsConfig",
+    "KinematicDiscoveryRequest",
+    "KinematicProposalDecision",
     "FilterRun",
     "FilterSummary",
     "FilterVisualQualityConfig",
+    "VisualCameraScore",
     "QualityFinding",
     "VlmEvaluation",
     "VlmSettings",

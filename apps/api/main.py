@@ -18,8 +18,11 @@ from robot_data_studio.quality import (
     FilterDetail,
     FilterRun,
     FilterSummary,
+    KinematicDiscoveryRequest,
+    KinematicProposalDecision,
     VlmSettings,
 )
+from robot_data_studio.quality.kinematics import CorrectionProposal, DiscoveryRefusal
 from robot_data_studio.reports import ReportSignals
 from robot_data_studio.viewer import create_episode_recording
 
@@ -276,6 +279,48 @@ def create_app(artifact_root: str | Path = ".rds-artifacts") -> FastAPI:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.post(
+        "/api/projects/{project_id}/filters/kinematics/discover",
+        status_code=201,
+        response_model=CorrectionProposal | DiscoveryRefusal,
+    )
+    def discover_kinematic_corrections(
+        project_id: str,
+        request: KinematicDiscoveryRequest,
+    ) -> CorrectionProposal | DiscoveryRefusal:
+        try:
+            return service.discover_kinematic_corrections(project_id, request)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.get(
+        "/api/projects/{project_id}/filters/kinematics/proposals",
+        response_model=list[CorrectionProposal],
+    )
+    def kinematic_proposals(project_id: str) -> list[CorrectionProposal]:
+        try:
+            return service.kinematic_proposals(project_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @app.post(
+        "/api/projects/{project_id}/filters/kinematics/proposals/{proposal_id}/decision",
+        response_model=CorrectionProposal,
+    )
+    def decide_kinematic_proposal(
+        project_id: str,
+        proposal_id: str,
+        request: KinematicProposalDecision,
+    ) -> CorrectionProposal:
+        try:
+            return service.decide_kinematic_proposal(project_id, proposal_id, request)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
 
     @app.get("/api/projects/{project_id}/vlm-settings", response_model=VlmSettings)
     def vlm_settings(project_id: str) -> VlmSettings:

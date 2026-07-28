@@ -8,8 +8,14 @@ import numpy as np
 import pytest
 
 from robot_data_studio.lerobot.models import DatasetMetadata, EpisodeFrame, EpisodeSummary
-from robot_data_studio.quality.filter_models import FilterConfig
+from robot_data_studio.quality.filter_models import (
+    EpisodeFilterStageStatus,
+    EpisodeFilterSummary,
+    FilterConfig,
+    FilterSummary,
+)
 from robot_data_studio.quality.filter_service import DatasetFilterService, infer_gripper_indices
+from robot_data_studio.quality.dover_backend import VideoTechnicalScore
 from robot_data_studio.quality.models import CleaningConfig
 from robot_data_studio.quality.scorer import EpisodeQualityScorer
 
@@ -196,6 +202,25 @@ class SharedVideoReader(SpikeReader):
         )
 
 
+class ExpectedVideoReader(SpikeReader):
+    def metadata(self) -> DatasetMetadata:
+        return super().metadata().model_copy(
+            update={"video_keys": ["observation.images.cam_high"]}
+        )
+
+
+class PartialExpectedVideoReader(SharedVideoReader):
+    def metadata(self) -> DatasetMetadata:
+        return super().metadata().model_copy(
+            update={
+                "video_keys": [
+                    "observation.images.cam_high",
+                    "observation.images.cam_wrist",
+                ]
+            }
+        )
+
+
 class MultiCameraVideoReader(SpikeReader):
     def __init__(self, root: Path) -> None:
         super().__init__()
@@ -211,6 +236,7 @@ class MultiCameraVideoReader(SpikeReader):
                 ]
             }
         )
+
 
     def list_episodes(self, limit: int | None = None) -> list[EpisodeSummary]:
         episodes = [self.episode(0), self.episode(1)]
@@ -239,6 +265,12 @@ class MultiCameraVideoReader(SpikeReader):
         )
 
 
+class ManyVideoReader(SharedVideoReader):
+    def list_episodes(self, limit: int | None = None) -> list[EpisodeSummary]:
+        episodes = [self.episode(index) for index in range(20)]
+        return episodes[:limit] if limit is not None else episodes
+
+
 def test_visual_quality_samples_each_episode_segment_from_shared_video(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -257,12 +289,14 @@ def test_visual_quality_samples_each_episode_segment_from_shared_video(
         sample_once,
     )
 
-    DatasetFilterService(SharedVideoReader(tmp_path), FilterConfig()).summary()
+    service = DatasetFilterService(SharedVideoReader(tmp_path), FilterConfig())
+    service.summary()
 
     assert sorted(calls, key=lambda item: item[1]) == [
         (video_path, 0.0, 2.02),
         (video_path, 2.02, 2.02),
     ]
+    assert service._sampled_video_cache == {}
 
 
 def test_visual_quality_samples_videos_with_bounded_parallelism(
@@ -310,6 +344,134 @@ def test_visual_quality_samples_videos_with_bounded_parallelism(
     ]
 
 
+def test_visual_quality_batches_model_once_and_reviews_bottom_camera_percentile(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    video_path = tmp_path / "videos" / "shared.mp4"
+    video_path.parent.mkdir()
+    video_path.write_bytes(b"fake video")
+    checker = np.indices((120, 160)).sum(axis=0) % 2 * 255
+    frame = np.repeat(checker[:, :, None], 3, axis=2).astype(np.uint8)
+    monkeypatch.setattr(
+        "robot_data_studio.quality.filter_service.sample_video_frames",
+        lambda *_args, **_kwargs: [frame, np.roll(frame, 1, axis=1)],
+    )
+    calls = 0
+
+    def fake_batch(samples, _config):
+        nonlocal calls
+        calls += 1
+        return [
+            VideoTechnicalScore(
+                sample.episode_index,
+                sample.camera,
+                0.1 if sample.episode_index == 0 else 0.9,
+                None,
+            )
+            for sample in samples
+        ]
+
+    monkeypatch.setattr("robot_data_studio.quality.filter_service.run_dover_batch", fake_batch)
+
+    summary = DatasetFilterService(ManyVideoReader(tmp_path), FilterConfig()).summary()
+
+    assert calls == 1
+    assert summary.episodes[0].stage_status["visual_quality"].status == "review"
+    assert summary.episodes[0].stage_status["visual_quality"].score == 0.1
+    assert summary.episodes[1].stage_status["visual_quality"].status == "passed"
+
+
+def test_partial_visual_run_reuses_full_camera_cohort(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    video_path = tmp_path / "videos" / "shared.mp4"
+    video_path.parent.mkdir()
+    video_path.write_bytes(b"fake video")
+    frame = np.indices((120, 160)).sum(axis=0) % 2 * 255
+    frame = np.repeat(frame[:, :, None], 3, axis=2).astype(np.uint8)
+    monkeypatch.setattr(
+        "robot_data_studio.quality.filter_service.sample_video_frames",
+        lambda *_args, **_kwargs: [frame, np.roll(frame, 1, axis=1)],
+    )
+    monkeypatch.setattr(
+        "robot_data_studio.quality.filter_service.run_dover_batch",
+        lambda samples, _config: [
+            VideoTechnicalScore(sample.episode_index, sample.camera, 0.1, None)
+            for sample in samples
+        ],
+    )
+    baseline = [
+        VideoTechnicalScore(index, "observation.images.cam_high", 0.9, None)
+        for index in range(1, 20)
+    ]
+
+    summary = DatasetFilterService(
+        ManyVideoReader(tmp_path),
+        FilterConfig(),
+        cohort_baseline=baseline,
+    ).summary(episode_indexes=[0])
+
+    stage = summary.episodes[0].stage_status["visual_quality"]
+    assert stage.status == "review"
+    assert stage.score == 0.1
+
+
+def test_model_only_visual_low_score_cannot_auto_exclude() -> None:
+    stages = {
+        stage: EpisodeFilterStageStatus(count=0, status="skipped", score=None, skipped_reason="disabled")
+        for stage in FilterConfig().enabled_filter_stages
+    }
+    stages["visual_quality"] = EpisodeFilterStageStatus(
+        count=1,
+        status="review",
+        score=0.1,
+        severity="warning",
+    )
+    summary = FilterSummary(
+        dataset_path="/tmp/test",
+        total_episodes=1,
+        total_frames=101,
+        stages=[],
+        episodes=[EpisodeFilterSummary(episode_index=0, stage_status=stages)],
+    )
+    config = CleaningConfig(enabled_filter_stages=["visual_quality"])
+
+    result = EpisodeQualityScorer().score_dataset(SpikeReader(), config, filter_summary=summary)[0]
+
+    assert result.score == pytest.approx(0.1)
+    assert result.status == "review"
+
+
+def test_unreviewed_model_low_score_cannot_auto_exclude() -> None:
+    stages = {
+        stage: EpisodeFilterStageStatus(count=0, status="skipped", score=None, skipped_reason="disabled")
+        for stage in FilterConfig().enabled_filter_stages
+    }
+    stages["visual_quality"] = EpisodeFilterStageStatus(
+        count=0,
+        status="passed",
+        score=0.1,
+        severity="none",
+    )
+    summary = FilterSummary(
+        dataset_path="/tmp/test",
+        total_episodes=1,
+        total_frames=101,
+        stages=[],
+        episodes=[EpisodeFilterSummary(episode_index=0, stage_status=stages)],
+    )
+
+    result = EpisodeQualityScorer().score_dataset(
+        SpikeReader(),
+        CleaningConfig(enabled_filter_stages=["visual_quality"]),
+        filter_summary=summary,
+    )[0]
+
+    assert result.status == "review"
+
+
 def test_disabled_filter_stages_skip_visual_quality_sampling(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -348,8 +510,10 @@ def test_visual_quality_detail_exposes_real_episode_frames_and_incidents(
     monkeypatch.setattr(
         "robot_data_studio.quality.filter_service.sample_video_frames",
         lambda *_args, **_kwargs: [
-            np.full((120, 160, 3), 128, dtype=np.uint8),
-            np.full((120, 160, 3), 128, dtype=np.uint8),
+            np.zeros((120, 160, 3), dtype=np.uint8),
+            np.zeros((120, 160, 3), dtype=np.uint8),
+            np.zeros((120, 160, 3), dtype=np.uint8),
+            np.zeros((120, 160, 3), dtype=np.uint8),
         ],
     )
 
@@ -358,11 +522,80 @@ def test_visual_quality_detail_exposes_real_episode_frames_and_incidents(
     )
 
     assert detail.visual_quality is not None
-    assert detail.visual_quality.sampled_frame_count == 2
+    assert detail.visual_quality.sampled_frame_count == 4
     assert detail.visual_quality.camera_count == 1
     incident = detail.visual_quality.incidents[0]
-    assert (incident.start_frame, incident.end_frame) == (0, 25)
-    assert [frame.frame for frame in incident.representative_frames] == [0, 25]
+    assert (incident.start_frame, incident.end_frame) == (0, 75)
+    assert incident.severity == "critical"
+    assert incident.hard_failure is True
+    assert detail.visual_quality.hard_failure is True
+    assert detail.visual_quality.hard_failure_reasons == ["black_screen"]
+    assert detail.visual_quality.requested_backend == "auto"
+    assert detail.visual_quality.model_status == "unavailable"
+
+
+def test_declared_but_missing_video_is_a_hard_failure(tmp_path: Path) -> None:
+    summary = DatasetFilterService(SharedVideoReader(tmp_path), FilterConfig()).summary()
+
+    stage = summary.episodes[0].stage_status["visual_quality"]
+    assert stage.status == "review"
+    assert stage.severity == "critical"
+    assert stage.score == 0.0
+
+
+def test_expected_but_unmapped_video_is_a_hard_failure() -> None:
+    summary = DatasetFilterService(ExpectedVideoReader(), FilterConfig()).summary()
+
+    stage = summary.episodes[0].stage_status["visual_quality"]
+    assert stage.status == "review"
+    assert stage.severity == "critical"
+    assert stage.score == 0.0
+
+
+def test_partially_unmapped_expected_camera_is_a_hard_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    video_path = tmp_path / "videos" / "shared.mp4"
+    video_path.parent.mkdir()
+    video_path.write_bytes(b"fake video")
+    checker = np.indices((120, 160)).sum(axis=0) % 2 * 255
+    frame = np.repeat(checker[:, :, None], 3, axis=2).astype(np.uint8)
+    monkeypatch.setattr(
+        "robot_data_studio.quality.filter_service.sample_video_frames",
+        lambda *_args, **_kwargs: [frame, np.roll(frame, 1, axis=1)],
+    )
+
+    summary = DatasetFilterService(PartialExpectedVideoReader(tmp_path), FilterConfig()).summary()
+
+    stage = summary.episodes[0].stage_status["visual_quality"]
+    assert stage.status == "review"
+    assert stage.severity == "critical"
+    assert stage.score == 0.0
+
+
+def test_filter_run_carries_cached_visual_details_without_resampling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    video_path = tmp_path / "videos" / "shared.mp4"
+    video_path.parent.mkdir()
+    video_path.write_bytes(b"fake video")
+    calls = 0
+
+    def sample(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return [np.zeros((120, 160, 3), dtype=np.uint8) for _ in range(4)]
+
+    monkeypatch.setattr("robot_data_studio.quality.filter_service.sample_video_frames", sample)
+
+    run = DatasetFilterService(SharedVideoReader(tmp_path), FilterConfig()).run()
+
+    assert set(run.visual_quality_details) == {0, 1}
+    assert run.visual_quality_details[0].visual_quality is not None
+    assert run.visual_quality_details[0].visual_quality.hard_failure is True
+    assert calls == 2
 
 
 def test_filter_summary_reuses_reference_normalization_statistics(
