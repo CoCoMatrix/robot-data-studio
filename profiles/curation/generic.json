@@ -1,0 +1,80 @@
+{
+  "profile_version": "1",
+  "name": "generic-embodied-task",
+  "selection": {
+    "train_allowlist": ["train/human/*.jsonl", "train/robot/*.jsonl", "synthetic/train/*.jsonl"],
+    "deny_patterns": ["*validation*", "*test*", "*eval*", "*/val/*"]
+  },
+  "task": {"text": "move object to target", "events": ["start", "contact", "end"]},
+  "modalities": [
+    {"name": "state", "required": true},
+    {"name": "action", "required": true},
+    {"name": "video", "required": false}
+  ],
+  "progress": {"mode": "fixed_time", "target_points": 64},
+  "sources": [
+    {
+      "source_id": "human-example",
+      "embodiment": "human",
+      "fps": 30.0,
+      "decoded_pts_tolerance_seconds": 0.05,
+      "latency_frames": 0,
+      "latency_tolerance_frames": 2,
+      "validity_field": "valid",
+      "resampling": "nearest",
+      "channels": [
+        {"name": "primary", "state_index": 0, "action_index": 0, "action_min": -1.0, "action_max": 1.0}
+      ]
+    },
+    {
+      "source_id": "robot-example",
+      "embodiment": "robot",
+      "fps": 10.0,
+      "decoded_pts_tolerance_seconds": 0.05,
+      "latency_frames": 0,
+      "latency_tolerance_frames": 1,
+      "validity_field": "valid",
+      "resampling": "nearest",
+      "channels": [
+        {"name": "primary", "state_index": 0, "action_index": 0, "action_min": -1.0, "action_max": 1.0}
+      ]
+    }
+  ],
+  "gates": {
+    "hard": ["split_not_train", "non_finite", "dimension_mismatch", "timestamp_non_monotonic"],
+    "review": [
+      "episode_start_truncated",
+      "episode_end_truncated",
+      "timestamp_jitter",
+      "idle_ratio",
+      "action_long_repeat",
+      "action_quantization",
+      "action_saturation",
+      "state_action_latency_mismatch",
+      "state_action_sign_mismatch"
+    ]
+  },
+  "checks": {
+    "boundary_tolerance_seconds": 0.1,
+    "timestamp_jitter_ratio": 0.25,
+    "idle_motion_threshold": 0.0001,
+    "max_idle_ratio": 0.8,
+    "action_repeat_frames": 8,
+    "quantization_unique_ratio": 0.1,
+    "saturation_tolerance": 0.000001
+  },
+  "vlm": {
+    "backend": "disabled",
+    "model": "mock-v1",
+    "prompt": "Compare task, start/contact/end evidence, action, and time.",
+    "max_calls": 0,
+    "max_prompt_tokens": 0,
+    "max_cost_usd": 0.0,
+    "estimated_cost_per_call_usd": 0.0
+  },
+  "sidecar_root": ".rds-artifacts/curation",
+  "normalization": {
+    "source_weights": {"human-example": 1.0, "robot-example": 1.0},
+    "task_weights": {}
+  }
+}

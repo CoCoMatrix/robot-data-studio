@@ -9,6 +9,7 @@ from .models import (
     VlmSettings,
 )
 from .scorer import EpisodeQualityScorer
+from .contracts import MetricEvidence, QualityScorecard, ScorecardDisposition
 from .filter_models import (
     FilterConfig,
     FilterConfigPatch,
@@ -34,6 +35,9 @@ __all__ = [
     "FilterSummary",
     "FilterVisualQualityConfig",
     "QualityFinding",
+    "MetricEvidence",
+    "QualityScorecard",
+    "ScorecardDisposition",
     "VlmEvaluation",
     "VlmSettings",
 ]

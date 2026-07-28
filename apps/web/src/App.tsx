@@ -27,6 +27,7 @@ import {
   type FilterStageId,
   type FilterSummary,
   type FormatInfo,
+  type MetricEvidence,
   type Project,
   type ReportGripperSeries,
   type ReportSignals,
@@ -100,6 +101,35 @@ const defaultQualityWeights: Record<string, number> = {
   orientation_alignment: 1,
   metadata_completeness: 1,
   task_success: 2,
+};
+
+const currentQualityChecks = [
+  ["S1", "Sudden change"],
+  ["S2", "State-action trend alignment"],
+  ["S3", "Extreme value"],
+  ["C1", "Instruction consistency"],
+  ["C2", "Full-silhouette video-state consistency"],
+  ["C3", "Video quality"],
+] as const;
+
+const humanExtensionChecks = [
+  ["H1_tracking_confidence", "H1 · Tracking confidence"],
+  ["H2_bone_topology", "H2 · Bone / topology stability"],
+  ["H3_left_right_identity", "H3 · Left/right identity"],
+  ["H4_se3_dynamics", "H4 · SE(3) dynamics"],
+  ["H5_quality_hand_crosscheck", "H5 · quality_hand cross-check"],
+  ["H6_camera_projection", "H6 · Camera-relative projection"],
+  ["H6b_stored_video_projection", "H6b · Stored-video binding"],
+  ["H7_bimanual_validity", "H7 · Per-hand validity"],
+  ["H8_text_event_consistency", "H8 · Text/event consistency"],
+  ["H9_hand_object_interaction", "H9 · Hand-object interaction"],
+] as const;
+
+const stageByCurrentCheck: Partial<Record<string, FilterStageId>> = {
+  S1: "sudden_change",
+  S2: "state_action_alignment",
+  S3: "extreme_value",
+  C3: "visual_quality",
 };
 
 function isFilterStageId(value: string): value is FilterStageId {
@@ -180,6 +210,95 @@ function compactEpisodeLabel(index: number) {
 
 function scoreLabel(score: number | null, copy: Translation) {
   return score === null ? copy.status.unscored.toLowerCase() : `${Math.round(score * 100)} / 100`;
+}
+
+function compactScore(score: number | null | undefined, copy: Translation) {
+  return score == null ? copy.quality.notEvaluated : `${Math.round(score * 100)}`;
+}
+
+function scorecardDecisionCounts(summary: CleaningSummary) {
+  const counts = { pass: 0, review: 0, mask: 0, reject: 0 };
+  for (const result of summary.results) {
+    const decision = result.final_decision ?? (
+      result.status === "passed" ? "pass" : result.status === "excluded" ? "reject" : "review"
+    );
+    if (decision === "pass") counts.pass += 1;
+    if (decision === "review" || result.disposition?.review) counts.review += 1;
+    if (decision === "mask" || (result.disposition?.window_masks.length ?? 0) > 0) counts.mask += 1;
+    if (decision === "reject" || result.disposition?.hard_reject) counts.reject += 1;
+  }
+  return counts;
+}
+
+function DatasetScorecardOverview({ summary, copy }: { summary: CleaningSummary; copy: Translation }) {
+  const core = average(summary.results.flatMap((result) => result.qwen_core_score == null ? [] : [result.qwen_core_score]));
+  const extension = average(summary.results.flatMap((result) => result.extension_score == null ? [] : [result.extension_score]));
+  const coverage = average(summary.results.flatMap((result) => result.coverage == null ? [] : [result.coverage]));
+  const counts = scorecardDecisionCounts(summary);
+  const denominators = summary.results.flatMap((result) =>
+    result.selected_denominator == null ? [] : [result.selected_denominator]
+  );
+  const denominator = denominators.length > 0 && denominators.every((value) => value === denominators[0])
+    ? denominators[0]
+    : null;
+  return (
+    <div className="scorecard-overview">
+      <span>{copy.quality.qwenScorecard}</span>
+      <strong>
+        {copy.quality.core} {compactScore(core, copy)} · {copy.quality.extension} {compactScore(extension, copy)} · {coverage == null ? copy.quality.notEvaluated : `${Math.round(coverage * 100)}% ${copy.quality.coverage}`}
+      </strong>
+      <small>{denominator == null ? "selected denominator N/A" : `selected denominator ${denominator}`} · P {counts.pass} · R {counts.review} · M {counts.mask} · X {counts.reject}</small>
+    </div>
+  );
+}
+
+function QualityContractSelector({
+  enabledQualityChecks,
+  enabledHumanExtensionChecks,
+  onToggleQuality,
+  onToggleHuman,
+}: {
+  enabledQualityChecks: string[];
+  enabledHumanExtensionChecks: string[];
+  onToggleQuality: (checkId: string) => void;
+  onToggleHuman: (checkId: string) => void;
+}) {
+  return (
+    <details className="quality-contract-selector">
+      <summary>
+        Current checks · {enabledQualityChecks.length + enabledHumanExtensionChecks.length} selected
+      </summary>
+      <div className="quality-check-grid">
+        {currentQualityChecks.map(([checkId, label]) => (
+          <label key={checkId}>
+            <input
+              type="checkbox"
+              aria-label={`${checkId} · ${label}`}
+              checked={enabledQualityChecks.includes(checkId)}
+              onChange={() => onToggleQuality(checkId)}
+            />
+            {checkId} · {label}
+          </label>
+        ))}
+        {humanExtensionChecks.map(([checkId, label]) => (
+          <label key={checkId}>
+            <input
+              type="checkbox"
+              aria-label={label}
+              checked={enabledHumanExtensionChecks.includes(checkId)}
+              onChange={() => onToggleHuman(checkId)}
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+      <div className="retired-checks">
+        <span>S4 · FK consistency · retired / out of scope</span>
+        <span>S5 · Direction convention · retired / out of scope</span>
+      </div>
+      <small>Dependencies run through shared cached intermediates; a missing prerequisite is reported per check.</small>
+    </details>
+  );
 }
 
 function subtaskTimeRange(startSeconds: number, endSeconds: number) {
@@ -279,6 +398,8 @@ export default function App() {
   const [activeFindingFilters, setActiveFindingFilters] = useState<string[]>([]);
   const [enabledFilterStages, setEnabledFilterStages] = useState<FilterStageId[]>(() => [...defaultEnabledFilterStages]);
   const [qualityWeights, setQualityWeights] = useState<Record<string, number>>(() => ({ ...defaultQualityWeights }));
+  const [enabledQualityChecks, setEnabledQualityChecks] = useState<string[]>(() => currentQualityChecks.map(([id]) => id));
+  const [enabledHumanExtensionChecks, setEnabledHumanExtensionChecks] = useState<string[]>([]);
   const [kinematicsConfigured, setKinematicsConfigured] = useState(false);
   const [showVlmSettings, setShowVlmSettings] = useState(false);
   const [vlmSettingsDirty, setVlmSettingsDirty] = useState(false);
@@ -339,15 +460,24 @@ export default function App() {
   });
   const cleaningMutation = useMutation({
     mutationFn: async (episodeIndexes?: number[]) => {
+      const currentStages = new Set(enabledFilterStages);
+      for (const [checkId] of currentQualityChecks) {
+        const stageId = stageByCurrentCheck[checkId];
+        if (!stageId) continue;
+        if (enabledQualityChecks.includes(checkId)) currentStages.add(stageId);
+        else currentStages.delete(stageId);
+      }
       const activeQualityWeights = Object.fromEntries(
-        enabledFilterStages.map((stageId) => [stageId, qualityWeights[stageId] ?? 1]),
+        [...currentStages].map((stageId) => [stageId, qualityWeights[stageId] ?? 1]),
       );
       if (vlmSettingsDirty && vlmSettings.enabled) {
         activeQualityWeights.task_success = qualityWeights.task_success ?? 2;
       }
       const ruleConfig: CleaningRuleConfig = {
-        enabled_filter_stages: enabledFilterStages,
+        enabled_filter_stages: [...currentStages],
         quality_weights: activeQualityWeights,
+        enabled_quality_checks: enabledQualityChecks,
+        enabled_human_extension_checks: enabledHumanExtensionChecks,
       };
       return runPipelineStream(project!.id, vlmSettingsDirty ? vlmSettings : undefined, episodeIndexes, ruleConfig, (progress) => {
         const ratio = progress.total > 0 ? progress.completed / progress.total : 0;
@@ -707,6 +837,16 @@ export default function App() {
             <div><span>{copy.dataset.frames}</span><strong>{project.dataset.total_frames.toLocaleString()}</strong></div>
             <div><span>{copy.dataset.rate}</span><strong>{project.dataset.fps} Hz</strong></div>
             <div>
+              <span>{copy.dataset.publication}</span>
+              <strong>
+                {project.dataset.format.toLowerCase().includes("lerobot") && project.dataset.version.startsWith("v3")
+                  ? copy.dataset.officialV3
+                  : copy.dataset.referenceOnly}
+                {" · "}
+                {Object.keys(project.dataset.features).filter((key) => key.endsWith("validity")).length} {copy.dataset.validityMasks}
+              </strong>
+            </div>
+            <div>
               <span>{copy.dataset.cleaning}</span>
               <strong>
                 {cleaningMutation.isPending
@@ -716,6 +856,21 @@ export default function App() {
                   : copy.dataset.notRun}
               </strong>
             </div>
+            {cleaningSummary && <DatasetScorecardOverview summary={cleaningSummary} copy={copy} />}
+            <QualityContractSelector
+              enabledQualityChecks={enabledQualityChecks}
+              enabledHumanExtensionChecks={enabledHumanExtensionChecks}
+              onToggleQuality={(checkId) => setEnabledQualityChecks((current) =>
+                current.includes(checkId)
+                  ? current.filter((item) => item !== checkId)
+                  : [...current, checkId]
+              )}
+              onToggleHuman={(checkId) => setEnabledHumanExtensionChecks((current) =>
+                current.includes(checkId)
+                  ? current.filter((item) => item !== checkId)
+                  : [...current, checkId]
+              )}
+            />
           </section>
 
           <section className={showCleaningReport ? "workspace report-mode" : "workspace"} style={workspaceStyle}>
@@ -2979,6 +3134,150 @@ function polylinePoints(values: number[], width: number, height: number, top: nu
     .join(" ");
 }
 
+function ScorecardMetricGroup({
+  title,
+  metrics,
+  copy,
+}: {
+  title: string;
+  metrics: MetricEvidence[];
+  copy: Translation;
+}) {
+  return (
+    <section className="metric-group">
+      <h3>{title}</h3>
+      {metrics.length === 0 ? (
+        <p>{copy.quality.noMetricEvidence}</p>
+      ) : metrics.map((metric) => (
+        <article className="metric-evidence" key={metric.metric_id}>
+          <header>
+            <strong>{metric.metric_id} · {metric.label}</strong>
+            <span>
+              {metric.status === "evaluated" ? compactScore(metric.score, copy) : metric.status.replace("_", " ")}
+              {metric.fidelity && metric.fidelity !== "standard" ? ` · ${metric.fidelity}` : ""}
+              {metric.status === "disabled" || metric.status === "retired" ? "" : ` · w ${metric.weight.toFixed(1)}`}
+            </span>
+          </header>
+          <p>{metric.reason}</p>
+          {metric.abnormal_intervals.map((interval, index) => (
+            <small key={`${interval.start_frame}-${interval.end_frame}-${index}`}>
+              <span>frames {interval.start_frame}–{interval.end_frame}</span>
+              {interval.reason && <span> · {interval.reason}</span>}
+            </small>
+          ))}
+          <LiveMetricEvidence metric={metric} />
+          {metric.metric_id === "C2" && (
+            <div className="evidence-slots">
+              <span>RGB</span><span>Robot mask</span><span>URDF projection</span><span>IoU</span>
+            </div>
+          )}
+          {(metric.metric_id.startsWith("H1") || metric.metric_id.startsWith("H6")) && (
+            <div className="evidence-slots">
+              <span>Video</span><span>Hand projection</span><span>Confidence</span><span>Valid spans</span>
+            </div>
+          )}
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function evidenceRecord(value: unknown): Record<string, unknown> | null {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function LiveMetricEvidence({ metric }: { metric: MetricEvidence }) {
+  const evidence = metric.evidence ?? {};
+  const providerMode = typeof evidence.provider_mode === "string" ? evidence.provider_mode : null;
+  if (metric.metric_id === "C1" && providerMode) {
+    const model = typeof evidence.model === "string" ? evidence.model : "unknown model";
+    const cache = evidence.from_cache === true ? "cached" : "fresh";
+    const axes = evidenceRecord(evidence.axes) ?? {};
+    return (
+      <div className="live-metric-evidence">
+        <strong>{providerMode} · {model} · {cache}</strong>
+        {Object.entries(axes).map(([name, rawAxis]) => {
+          const axis = evidenceRecord(rawAxis);
+          if (!axis) return null;
+          const state = typeof axis.state === "string" ? axis.state : "unknown";
+          const confidence = typeof axis.confidence === "number"
+            ? `${Math.round(axis.confidence * 100)}% confidence`
+            : "confidence N/A";
+          const frames = Array.isArray(axis.evidence_frames)
+            ? axis.evidence_frames.filter((value): value is number => typeof value === "number")
+            : [];
+          return (
+            <small key={name}>
+              {name} · {state} · {confidence} · frames {frames.length ? frames.join(", ") : "N/A"}
+            </small>
+          );
+        })}
+      </div>
+    );
+  }
+  if (metric.metric_id === "C2" && (providerMode || typeof evidence.provider === "string" || typeof evidence.projection_scope === "string")) {
+    const provider = providerMode ?? (typeof evidence.provider === "string" ? evidence.provider : "provider N/A");
+    const checkpoint = evidence.checkpoint_loaded === true ? "checkpoint loaded" : "checkpoint not loaded";
+    const frames = typeof evidence.evaluated_frame_count === "number"
+      ? `${evidence.evaluated_frame_count} keyframes`
+      : "keyframes N/A";
+    const scope = typeof evidence.projection_scope === "string"
+      ? evidence.projection_scope
+      : "projection scope N/A";
+    const objectMasks = Array.isArray(evidence.object_masks)
+      ? `${evidence.object_masks.length} object masks`
+      : "object masks N/A";
+    const aggregation = evidenceRecord(evidence.clip_aggregation);
+    const aggregateLabel = aggregation
+      ? ["iou", "precision", "recall", "coverage"]
+          .map((name) => typeof aggregation[name] === "number" ? `${name} ${(aggregation[name] as number).toFixed(3)}` : `${name} N/A`)
+          .join(" · ")
+      : null;
+    return (
+      <div className="live-metric-evidence">
+        <strong>{provider} · {checkpoint} · {frames}</strong>
+        <small>{scope} · {objectMasks}</small>
+        {scope === "full URDF visual silhouette" && (
+          <>
+            <small>{metric.fidelity ?? "provisional"} · IoU/precision/recall/coverage · temporal-offset diagnostic</small>
+            {aggregateLabel && <small>{aggregateLabel}</small>}
+          </>
+        )}
+      </div>
+    );
+  }
+  if (metric.metric_id === "C3" && typeof evidence.sample_count === "number") {
+    const issueCount = typeof evidence.issue_count === "number" ? evidence.issue_count : 0;
+    return (
+      <div className="live-metric-evidence">
+        <strong>{evidence.sample_count} decoded frames · {issueCount} issues</strong>
+      </div>
+    );
+  }
+  if (metric.metric_id === "H7_bimanual_validity") {
+    const activeHands = Array.isArray(evidence.active_hands) ? evidence.active_hands.join(", ") : "N/A";
+    return (
+      <div className="live-metric-evidence">
+        <strong>Per-hand usable supervision · {metric.score == null ? "N/A" : `${Math.round(metric.score * 100)}%`}</strong>
+        <small>task-active hands {activeHands} · inactive-hand absence allowed · independent tail masks</small>
+      </div>
+    );
+  }
+  if (metric.metric_id === "H9_hand_object_interaction") {
+    const states = Array.isArray(evidence.states) ? evidence.states.filter((value): value is string => typeof value === "string") : [];
+    const known = states.filter((state) => state !== "uncertain_or_occluded").length;
+    return (
+      <div className="live-metric-evidence">
+        <strong>{known} / {states.length || "N/A"} interaction states supported</strong>
+        <small>task-conditioned · cached hand/object masks and tracks · review-only before calibration</small>
+      </div>
+    );
+  }
+  return null;
+}
+
 function QualityReport({
   copy,
   quality,
@@ -3038,6 +3337,42 @@ function QualityReport({
             <span>{scoreLabel(quality.score, copy)}</span>
             <small>{statusLabel(quality.status, copy)}{copy.quality.sourceSeparator}{quality.source}</small>
           </div>
+          {(quality.metric_evidence?.length ?? 0) > 0 && (
+            <div className="scorecard-summary">
+              <div><span>{copy.quality.core}</span><strong>{compactScore(quality.qwen_core_score, copy)}</strong></div>
+              <div><span>{copy.quality.extension}</span><strong>{compactScore(quality.extension_score, copy)}</strong></div>
+              <div><span>{copy.quality.coverage}</span><strong>{quality.coverage == null ? copy.quality.notEvaluated : `${Math.round(quality.coverage * 100)}% coverage`}</strong></div>
+              <div><span>Core coverage</span><strong>{quality.qwen_core_coverage == null ? copy.quality.notEvaluated : `${Math.round(quality.qwen_core_coverage * 100)}%`}</strong></div>
+              <div><span>Extension coverage</span><strong>{quality.extension_coverage == null ? copy.quality.notEvaluated : `${Math.round(quality.extension_coverage * 100)}%`}</strong></div>
+              <div><span>Denominator</span><strong>{quality.evaluated_count ?? 0} / {quality.selected_denominator ?? 0} selected</strong></div>
+              <div><span>{copy.quality.finalDecision}</span><strong>{quality.final_decision ?? copy.quality.notEvaluated}</strong></div>
+            </div>
+          )}
+          {(quality.metric_evidence?.length ?? 0) > 0 && (
+            <div className="metric-groups">
+              <ScorecardMetricGroup
+                title={copy.quality.qwenCore}
+                metrics={(quality.metric_evidence ?? []).filter((metric) => metric.group === "qwen_core")}
+                copy={copy}
+              />
+              <ScorecardMetricGroup
+                title={copy.quality.extensionGroup}
+                metrics={(quality.metric_evidence ?? []).filter((metric) => metric.group === "human_extension" || metric.group === "robot_extension")}
+                copy={copy}
+              />
+              <ScorecardMetricGroup
+                title={copy.quality.safetyGates}
+                metrics={(quality.metric_evidence ?? []).filter((metric) => metric.group === "safety_gate")}
+                copy={copy}
+              />
+              {quality.disposition && (
+                <div className="disposition-summary">
+                  <strong>{copy.quality.dispositions}</strong>
+                  <span>reject {String(quality.disposition.hard_reject)} · review {String(quality.disposition.review)} · masks {quality.disposition.window_masks.length} · weight {quality.disposition.soft_weight.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+          )}
           <div className="score-list">
             <div>
               <span>{copy.quality.dataQuality}</span>

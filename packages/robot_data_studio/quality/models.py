@@ -5,6 +5,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
+from .contracts import MetricEvidence, ScorecardDisposition
+from .contracts import CORE_CONTRACT_IDS, CURRENT_QWEN_CONTRACT_VERSION, HUMAN_EXTENSION_IDS
+
 
 CleaningStatus = Literal["passed", "review", "excluded", "unscored"]
 DecisionSource = Literal["auto", "manual"]
@@ -26,8 +29,6 @@ DEFAULT_ENABLED_FILTER_STAGES: list[FilterStageId] = [
     "sudden_change",
     "state_action_alignment",
     "extreme_value",
-    "kinematic_consistency",
-    "orientation_alignment",
     "metadata_completeness",
 ]
 
@@ -83,6 +84,13 @@ class CleaningConfig(BaseModel):
         default_factory=lambda: DEFAULT_ENABLED_FILTER_STAGES.copy()
     )
     quality_weights: dict[str, float] = Field(default_factory=lambda: DEFAULT_QUALITY_WEIGHTS.copy())
+    quality_contract_version: str = CURRENT_QWEN_CONTRACT_VERSION
+    enabled_quality_checks: list[str] = Field(
+        default_factory=lambda: list(CORE_CONTRACT_IDS)
+    )
+    enabled_human_extension_checks: list[str] = Field(
+        default_factory=list
+    )
     vlm: VlmSettings = Field(default_factory=VlmSettings)
 
     @field_validator("quality_weights")
@@ -96,6 +104,22 @@ class CleaningConfig(BaseModel):
         if invalid:
             raise ValueError("quality weights must be between 0.25 and 3.0")
         return weights
+
+    @field_validator("enabled_quality_checks")
+    @classmethod
+    def validate_quality_checks(cls, checks: list[str]) -> list[str]:
+        unknown = set(checks) - set(CORE_CONTRACT_IDS)
+        if unknown:
+            raise ValueError(f"unknown or retired quality checks: {sorted(unknown)}")
+        return list(dict.fromkeys(checks))
+
+    @field_validator("enabled_human_extension_checks")
+    @classmethod
+    def validate_human_checks(cls, checks: list[str]) -> list[str]:
+        unknown = set(checks) - set(HUMAN_EXTENSION_IDS)
+        if unknown:
+            raise ValueError(f"unknown Human extension checks: {sorted(unknown)}")
+        return list(dict.fromkeys(checks))
 
 
 class QualityFinding(BaseModel):
@@ -114,6 +138,18 @@ class EpisodeQualityResult(BaseModel):
     per_attribute_scores: dict[str, float]
     findings: list[QualityFinding]
     review_note: str | None = None
+    qwen_core_score: float | None = Field(default=None, ge=0, le=1)
+    extension_score: float | None = Field(default=None, ge=0, le=1)
+    coverage: float | None = Field(default=None, ge=0, le=1)
+    qwen_core_coverage: float | None = Field(default=None, ge=0, le=1)
+    extension_coverage: float | None = Field(default=None, ge=0, le=1)
+    quality_contract_version: str | None = None
+    selected_checks: list[str] = Field(default_factory=list)
+    selected_denominator: int = Field(default=0, ge=0)
+    evaluated_count: int = Field(default=0, ge=0)
+    final_decision: Literal["pass", "review", "mask", "reject"] | None = None
+    metric_evidence: list[MetricEvidence] = Field(default_factory=list)
+    disposition: ScorecardDisposition = Field(default_factory=ScorecardDisposition)
     updated_at: datetime
 
     @model_validator(mode="after")

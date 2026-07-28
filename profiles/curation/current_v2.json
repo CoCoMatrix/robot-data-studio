@@ -1,0 +1,65 @@
+{
+  "profile_version": "2",
+  "name": "current-selectable-embodied-cleaning",
+  "selection": {
+    "train_allowlist": ["synthetic/train/*.jsonl"],
+    "deny_patterns": ["*val*", "*validation*", "*test*", "*eval*"]
+  },
+  "task": {
+    "text": "perform the configured embodied task",
+    "events": ["start", "contact", "end"]
+  },
+  "modalities": [
+    {"name": "absolute_pose", "required": true},
+    {"name": "validity", "required": true},
+    {"name": "video", "required": false}
+  ],
+  "progress": {"mode": "event_or_motion", "target_points": 64},
+  "sources": [
+    {
+      "source_id": "synthetic-example",
+      "embodiment": "human",
+      "adapter": "jsonl",
+      "fps": 30.0,
+      "validity_field": "valid",
+      "resampling": "nearest"
+    }
+  ],
+  "gates": {
+    "hard": ["split_leak", "schema_mismatch", "non_finite", "file_corrupt"],
+    "review": ["timestamp_jitter", "local_invalid"]
+  },
+  "vlm": {
+    "backend": "disabled",
+    "model": "mock-v1",
+    "max_calls": 0,
+    "max_prompt_tokens": 0,
+    "max_cost_usd": 0.0,
+    "estimated_cost_per_call_usd": 0.0
+  },
+  "sidecar_root": ".rds-artifacts/curation-v2",
+  "normalization": {"source_weights": {}, "task_weights": {}},
+  "quality_contract": {
+    "contract_version": "qwen-cleaning-v2",
+    "qwen": {
+      "S1": {"enabled": true},
+      "S2": {"enabled": true},
+      "S3": {"enabled": true},
+      "C1": {"enabled": true},
+      "C2": {"enabled": true},
+      "C3": {"enabled": true}
+    },
+    "human_extensions": {
+      "H1_tracking_confidence": {"enabled": true},
+      "H2_bone_topology": {"enabled": true},
+      "H3_left_right_identity": {"enabled": true},
+      "H4_se3_dynamics": {"enabled": true},
+      "H5_quality_hand_crosscheck": {"enabled": true},
+      "H6_camera_projection": {"enabled": true},
+      "H6b_stored_video_projection": {"enabled": true},
+      "H7_bimanual_validity": {"enabled": true},
+      "H8_text_event_consistency": {"enabled": true},
+      "H9_hand_object_interaction": {"enabled": true}
+    }
+  }
+}

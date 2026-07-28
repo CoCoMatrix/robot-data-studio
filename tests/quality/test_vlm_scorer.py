@@ -95,11 +95,9 @@ def test_unconfigured_kinematic_consistency_finding_is_not_reported_as_low_score
     messages = [finding.message for finding in result.findings]
     assert "Kinematic consistency score is low." not in messages
     assert "Kinematic Consistency score is low (0.00)." not in messages
-    assert any(
-        finding.code == "kinematic_consistency_unconfigured"
-        and "Kinematic consistency is not configured" in finding.message
-        for finding in result.findings
-    )
+    assert not any(finding.code == "kinematic_consistency_unconfigured" for finding in result.findings)
+    retired = {metric.metric_id: metric for metric in result.metric_evidence}
+    assert retired["S4"].status == retired["S5"].status == "retired"
 
 
 def test_vlm_task_success_is_kept_separate_from_data_quality_dimensions() -> None:

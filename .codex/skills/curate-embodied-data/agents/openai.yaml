@@ -1,0 +1,4 @@
+interface:
+  display_name: "Curate Embodied Data"
+  short_description: "Clean, review, pose, and publish embodied train data"
+  default_prompt: "Use $curate-embodied-data to inspect allowlisted raw train data, clean and review it, prepare poses, and publish an official LeRobot V3 handoff."

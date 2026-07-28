@@ -1,0 +1,70 @@
+{
+  "profile_version": "1",
+  "name": "grasp-example",
+  "selection": {
+    "train_allowlist": ["train/human/grasp-*.jsonl", "train/robot/grasp-*.jsonl"],
+    "deny_patterns": ["*validation*", "*test*", "*eval*", "*/val/*"]
+  },
+  "task": {"text": "grasp object and place it on target", "events": ["start", "contact", "end"]},
+  "modalities": [
+    {"name": "state", "required": true},
+    {"name": "action", "required": true},
+    {"name": "video", "required": true}
+  ],
+  "progress": {"mode": "event_or_motion", "target_points": 64},
+  "sources": [
+    {
+      "source_id": "human-example",
+      "embodiment": "human",
+      "fps": 30.0,
+      "decoded_pts_tolerance_seconds": 0.05,
+      "latency_frames": 1,
+      "latency_tolerance_frames": 2,
+      "validity_field": "valid",
+      "resampling": "nearest",
+      "channels": [
+        {"name": "gripper", "state_index": 0, "action_index": 0, "action_min": -1.0, "action_max": 1.0}
+      ]
+    },
+    {
+      "source_id": "robot-example",
+      "embodiment": "robot",
+      "fps": 10.0,
+      "decoded_pts_tolerance_seconds": 0.05,
+      "latency_frames": 0,
+      "latency_tolerance_frames": 1,
+      "validity_field": "valid",
+      "resampling": "nearest",
+      "channels": [
+        {"name": "gripper", "state_index": 0, "action_index": 0, "action_min": -1.0, "action_max": 1.0}
+      ]
+    }
+  ],
+  "gates": {
+    "hard": ["split_not_train", "non_finite", "dimension_mismatch"],
+    "review": ["episode_start_truncated", "episode_end_truncated", "idle_ratio", "state_action_latency_mismatch"]
+  },
+  "checks": {
+    "boundary_tolerance_seconds": 0.08,
+    "timestamp_jitter_ratio": 0.2,
+    "idle_motion_threshold": 0.0001,
+    "max_idle_ratio": 0.75,
+    "action_repeat_frames": 10,
+    "quantization_unique_ratio": 0.08,
+    "saturation_tolerance": 0.000001
+  },
+  "vlm": {
+    "backend": "mock",
+    "model": "mock-v1",
+    "prompt": "Check structured start/contact/end evidence for consistency.",
+    "max_calls": 8,
+    "max_prompt_tokens": 2048,
+    "max_cost_usd": 0.008,
+    "estimated_cost_per_call_usd": 0.001
+  },
+  "sidecar_root": ".rds-artifacts/curation-grasp",
+  "normalization": {
+    "source_weights": {"human-example": 1.0, "robot-example": 1.0},
+    "task_weights": {"grasp-object": 1.0}
+  }
+}
