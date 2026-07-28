@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<robot name="nonstandard_robot">
+  <link name="origin_frame"/>
+  <link name="wrist_shell"/>
+  <link name="camera_mount"/>
+  <link name="other_shell"/>
+  <link name="sensor_mount"/>
+
+  <joint name="alpha_axis" type="revolute">
+    <parent link="origin_frame"/>
+    <child link="wrist_shell"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.141592653589793" upper="3.141592653589793" effort="10" velocity="10"/>
+  </joint>
+  <joint name="omega_mount" type="fixed">
+    <parent link="wrist_shell"/>
+    <child link="camera_mount"/>
+    <origin xyz="1 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="gamma_axis" type="revolute">
+    <parent link="origin_frame"/>
+    <child link="other_shell"/>
+    <origin xyz="0 2 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.141592653589793" upper="3.141592653589793" effort="10" velocity="10"/>
+  </joint>
+  <joint name="sigma_mount" type="fixed">
+    <parent link="other_shell"/>
+    <child link="sensor_mount"/>
+    <origin xyz="0.5 0 0" rpy="0 0 0"/>
+  </joint>
+</robot>
