@@ -1,0 +1,4 @@
+interface:
+  display_name: "Align Robot Kinematics"
+  short_description: "Discover and review robot kinematic corrections"
+  default_prompt: "Use $align-robot-kinematics to analyze this dataset and URDF before applying any correction."
