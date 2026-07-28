@@ -62,6 +62,12 @@ Import dataset → Select checks and run scope → Run quality pipeline → Read
 
 Quality checks include visual quality, sudden changes, state/action alignment, extreme values, metadata completeness, kinematic consistency, orientation alignment, and optional VLM task-success scoring. After the pipeline finishes, review the report dashboard, quality distribution, findings, signal charts, and recommended actions.
 
+### Dynamic SE(3) kinematic consistency
+
+Upload a URDF and use **Discover correction** to infer robot chains, joint/state mappings, logged pose fields, and quaternion/matrix/6D/rotation-vector/RPY conventions from structure and held-out geometry. RDS reports position residuals in metres and orientation residuals in radians/degrees separately, and can propose base, TCP, joint-sign, and joint-zero corrections. Ambiguous or under-excited data produces an evidence-backed refusal instead of a guessed mapping.
+
+Proposals remain reviewable project metadata until accepted. Accepted, non-stale profiles drive filter previews and derived export pose fields; source observations are never overwritten. Every corrected export records the proposal ID, fingerprint, full profile, evidence, warnings, and before/after metrics in `conversion_report.json`. Manual link/index configuration remains available under **Manual configuration (advanced)**.
+
 ## Requirements
 
 - Python 3.11+
@@ -135,7 +141,7 @@ Complete one end-to-end loop in this order:
 
 1. **Import a dataset** — Enter the local dataset root in `Dataset path` (not a child file like `meta/info.json`) and click import. `Import format` defaults to `Auto detect`; pick a format manually if detection fails. Leading/trailing `'` or `"` in the path are stripped automatically.
 2. **Choose run scope and checks** — In the sidebar, enable quality checks and choose whether to run on all episodes or only selected ones.
-3. **Optional advanced setup** — Upload a URDF and configure joint mapping for kinematic consistency; enable task-success checks in `VLM settings` (requires an API key and `ffmpeg`).
+3. **Optional advanced setup** — Upload a URDF and discover a kinematic correction, review held-out SE(3) evidence, then accept it; use manual mapping only as an advanced fallback. Enable task-success checks in `VLM settings` when needed (requires an API key and `ffmpeg`).
 4. **Run the quality pipeline** — Click run and wait for progress to finish. Each episode is labeled passed, needs review, or excluded.
 5. **Read the cleaning report** — Open the report page for quality distribution, findings, dataset signal charts, gripper curves, and recommended actions; download report JSON if needed.
 6. **Locate problematic episodes** — From the report or sidebar, open issue/filter detail pages to inspect findings and parameters.
@@ -147,6 +153,7 @@ Complete one end-to-end loop in this order:
 | Content | Path |
 | --- | --- |
 | Cleaning state | `.rds-artifacts/projects/<project_id>/cleaning_state.json` |
+| Kinematic proposals | `.rds-artifacts/projects/<project_id>/filters/kinematic_proposals.json` |
 | Rerun recordings | `.rds-artifacts/*.rrd` |
 | Exports and conversion reports | `.rds-artifacts/` |
 
@@ -212,7 +219,7 @@ The PushT walkthrough and core API export flows pass without these optional depe
 
 ## API summary
 
-Backend default: `http://127.0.0.1:8000`. Main endpoints: `/api/health`, `/api/formats`, `/api/projects`, `/api/projects/{id}/cleaning`, `/api/projects/{id}/exports`, `/api/artifacts/{filename}`. See `apps/api/main.py` for the full route list.
+Backend default: `http://127.0.0.1:8000`. Main endpoints: `/api/health`, `/api/formats`, `/api/projects`, `/api/projects/{id}/cleaning`, `/api/projects/{id}/exports`, and `/api/projects/{id}/filters/kinematics/{discover,proposals}`. See `apps/api/main.py` for the full route list.
 
 ## Current limitations
 

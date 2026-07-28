@@ -62,6 +62,12 @@ RDS 在本机运行，数据集始终留在你的磁盘上，不上传云端。�
 
 当前质量检查包括视觉质量、突变检测、state/action 对齐、极值、元数据完整性、运动学一致性、姿态对齐，以及可选的 VLM 任务完成度检查。流水线结束后可查看报告仪表盘、质量分布、问题发现、信号曲线与建议操作。
 
+### 动态 SE(3) 运动学一致性
+
+上传 URDF 后点击 **自动发现修正**，RDS 会从机器人结构和 held-out 几何误差中识别运动链、joint/state 映射、末端 pose 字段，以及四元数、旋转矩阵、6D、旋转向量或 RPY 表示。位置残差以米显示，姿态残差分别以弧度和角度显示；系统可建议 base、TCP、关节正负号和零位 offset 修正。遇到映射歧义或运动激励不足时，会给出带证据的拒绝结果，不会猜 link 名或列号。
+
+Proposal 在接受前只是可审查的项目元数据。只有已接受且未 stale 的 profile 才用于 filter 预览和导出中的派生末端 pose；源 observation 永远不会被覆盖。修正后的导出会在 `conversion_report.json` 中记录 proposal ID、fingerprint、完整 profile、证据、警告与 before/after 指标。手动 link/index 配置保留在 **手动配置（高级）** 中作为 fallback。
+
 ## 环境要求
 
 - Python 3.11+
@@ -135,7 +141,7 @@ pnpm dev:web
 
 1. **导入数据集** — 在 `Dataset path` 输入本地数据集根目录（不是 `meta/info.json` 这类子文件），点击导入。`Import format` 默认 `Auto detect`；识别失败时可手动选择格式。路径首尾多余的 `'` 或 `"` 会自动清理。
 2. **选择运行范围与检查项** — 在侧栏勾选要执行的质量检查，并选择对全部 episode 还是仅选中 episode 运行流水线。
-3. **可选高级配置** — 上传 URDF 并配置关节映射以启用运动学一致性检查；在 `VLM 设置` 中启用任务完成度检查（需要 API key 和 `ffmpeg`）。
+3. **可选高级配置** — 上传 URDF，自动发现运动学修正，审查 held-out SE(3) 证据后再接受；手动映射仅作为高级 fallback。在 `VLM 设置` 中按需启用任务完成度检查（需要 API key 和 `ffmpeg`）。
 4. **运行质量流水线** — 点击运行并等待进度完成。每个 episode 会被标记为通过、待审查或排除。
 5. **阅读清洗报告** — 打开报告页查看质量分布、问题发现、数据集信号图、夹爪曲线与建议操作；可下载报告 JSON。
 6. **定位问题 episode** — 从报告或侧栏进入问题/筛选详情页，查看具体 findings 与参数。
@@ -147,6 +153,7 @@ pnpm dev:web
 | 内容 | 路径 |
 | --- | --- |
 | 清洗状态 | `.rds-artifacts/projects/<project_id>/cleaning_state.json` |
+| 运动学 proposals | `.rds-artifacts/projects/<project_id>/filters/kinematic_proposals.json` |
 | Rerun 录制 | `.rds-artifacts/*.rrd` |
 | 导出数据与转换报告 | `.rds-artifacts/` |
 
@@ -212,7 +219,7 @@ PushT 教程与核心 API 导出流程不依赖上述可选项即可正常使用
 
 ## API 摘要
 
-后端默认地址：`http://127.0.0.1:8000`。主要端点：`/api/health`、`/api/formats`、`/api/projects`、`/api/projects/{id}/cleaning`、`/api/projects/{id}/exports`、`/api/artifacts/{filename}`。完整路由见 `apps/api/main.py`。
+后端默认地址：`http://127.0.0.1:8000`。主要端点：`/api/health`、`/api/formats`、`/api/projects`、`/api/projects/{id}/cleaning`、`/api/projects/{id}/exports`，以及 `/api/projects/{id}/filters/kinematics/{discover,proposals}`。完整路由见 `apps/api/main.py`。
 
 ## 当前限制
 
