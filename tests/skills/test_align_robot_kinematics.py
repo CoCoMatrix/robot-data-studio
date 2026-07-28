@@ -7,6 +7,9 @@ import sys
 import h5py
 import numpy as np
 import pinocchio as pin
+from fastapi.testclient import TestClient
+
+from apps.api.main import create_app
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -66,6 +69,38 @@ def test_wrapper_discovers_arbitrary_names_without_modifying_source(tmp_path: Pa
     assert payload["after_held_out"]["position"]["p95"] < 1e-5
     assert payload["after_held_out"]["orientation"]["p95"] < 1e-5
     assert hashlib.sha256(dataset.read_bytes()).hexdigest() == before
+
+    client = TestClient(create_app(artifact_root=tmp_path / "artifacts"))
+    project = client.post(
+        "/api/projects",
+        json={"path": str(dataset), "format_hint": "act_hdf5"},
+    ).json()
+    upload = client.post(
+        f"/api/projects/{project['id']}/filters/kinematics/urdf?filename=fixture.urdf",
+        content=URDF.read_bytes(),
+        headers={"content-type": "application/octet-stream"},
+    )
+    assert upload.status_code == 201
+    api = client.post(
+        f"/api/projects/{project['id']}/filters/kinematics/discover",
+        json={"sample_count": 17, "max_candidates": 8},
+    )
+    assert api.status_code == 201, api.text
+    api_payload = api.json()
+    for key in (
+        "status",
+        "before_training",
+        "after_training",
+        "before_held_out",
+        "after_held_out",
+        "confidence",
+        "candidate_margin",
+        "evidence",
+        "warnings",
+    ):
+        assert payload[key] == api_payload[key]
+    assert payload["profile"]["fingerprint"] == api_payload["profile"]["fingerprint"]
+    assert payload["profile"]["chains"] == api_payload["profile"]["chains"]
 
 
 def test_wrapper_contains_no_vendor_specific_link_constants() -> None:
