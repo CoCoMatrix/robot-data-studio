@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import h5py
@@ -69,6 +70,15 @@ def test_discover_accept_preview_and_stale_kinematic_correction(tmp_path: Path) 
     assert max(detail.json()["series"]["orientation_error"]) < 1e-4
     assert detail.json()["parameters"]["accepted_proposal_id"] == proposal["id"]
     assert detail.json()["parameters"]["accepted_proposal"]["evidence"]
+
+    exported = client.post(
+        f"/api/projects/{project_id}/exports",
+        json={"episode_indexes": [0], "format": "act_hdf5", "options": {}},
+    )
+    assert exported.status_code == 201
+    report = json.loads(Path(exported.json()["report_path"]).read_text())
+    assert report["kinematic_correction"]["proposal_id"] == proposal["id"]
+    assert report["kinematic_correction"]["profile"] == proposal["profile"]
 
     with h5py.File(dataset, "r+") as file:
         file["observations/qpos"][0, 0] += 0.05

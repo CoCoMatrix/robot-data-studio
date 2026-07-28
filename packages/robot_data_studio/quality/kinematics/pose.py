@@ -50,6 +50,33 @@ def decode_rotations(
     raise InvalidPoseRepresentation(f"unsupported orientation representation: {representation}")
 
 
+def encode_rotations(
+    rotations: ArrayLike,
+    representation: OrientationRepresentation | str,
+) -> np.ndarray:
+    matrices = np.asarray(rotations, dtype=np.float64)
+    if matrices.ndim == 2:
+        matrices = matrices[None, :, :]
+    if matrices.ndim != 3 or matrices.shape[1:] != (3, 3):
+        raise InvalidPoseRepresentation("rotations must have shape (T, 3, 3)")
+    if not np.all(np.isfinite(matrices)):
+        raise InvalidPoseRepresentation("rotations contain non-finite values")
+    if representation == "rotation_matrix":
+        return matrices.reshape(-1, 9)
+    if representation == "rotation_6d":
+        return np.concatenate((matrices[:, :, 0], matrices[:, :, 1]), axis=1)
+    quaternions = np.asarray([_quaternion_xyzw_from_rotation(matrix) for matrix in matrices])
+    if representation == "quaternion_xyzw":
+        return quaternions
+    if representation == "quaternion_wxyz":
+        return quaternions[:, [3, 0, 1, 2]]
+    if representation == "rotation_vector":
+        return np.asarray([_rotation_vector_from_quaternion(row) for row in quaternions])
+    if representation == "rpy":
+        return np.asarray([_rpy_from_rotation(matrix) for matrix in matrices])
+    raise InvalidPoseRepresentation(f"unsupported orientation representation: {representation}")
+
+
 def compute_se3_residuals(predicted: ArrayLike, logged: ArrayLike) -> SE3ResidualResult:
     predicted_array = _validate_transforms(predicted, "predicted")
     logged_array = _validate_transforms(logged, "logged")
@@ -166,6 +193,82 @@ def _rotation_from_rpy(roll: float, pitch: float, yaw: float) -> np.ndarray:
     rotation_y = np.asarray([[cp, 0.0, sp], [0.0, 1.0, 0.0], [-sp, 0.0, cp]])
     rotation_z = np.asarray([[cy, -sy, 0.0], [sy, cy, 0.0], [0.0, 0.0, 1.0]])
     return rotation_z @ rotation_y @ rotation_x
+
+
+def _quaternion_xyzw_from_rotation(rotation: np.ndarray) -> np.ndarray:
+    # The diagonal-based form avoids the loss of precision of a trace-only formula near pi.
+    candidates = np.asarray(
+        [
+            1.0 + rotation[0, 0] - rotation[1, 1] - rotation[2, 2],
+            1.0 - rotation[0, 0] + rotation[1, 1] - rotation[2, 2],
+            1.0 - rotation[0, 0] - rotation[1, 1] + rotation[2, 2],
+            1.0 + np.trace(rotation),
+        ]
+    )
+    index = int(np.argmax(candidates))
+    value = np.sqrt(max(candidates[index], 0.0)) * 0.5
+    if value <= 1e-12:
+        return np.asarray([0.0, 0.0, 0.0, 1.0])
+    denominator = 4.0 * value
+    if index == 0:
+        quaternion = np.asarray(
+            [
+                value,
+                (rotation[0, 1] + rotation[1, 0]) / denominator,
+                (rotation[0, 2] + rotation[2, 0]) / denominator,
+                (rotation[2, 1] - rotation[1, 2]) / denominator,
+            ]
+        )
+    elif index == 1:
+        quaternion = np.asarray(
+            [
+                (rotation[0, 1] + rotation[1, 0]) / denominator,
+                value,
+                (rotation[1, 2] + rotation[2, 1]) / denominator,
+                (rotation[0, 2] - rotation[2, 0]) / denominator,
+            ]
+        )
+    elif index == 2:
+        quaternion = np.asarray(
+            [
+                (rotation[0, 2] + rotation[2, 0]) / denominator,
+                (rotation[1, 2] + rotation[2, 1]) / denominator,
+                value,
+                (rotation[1, 0] - rotation[0, 1]) / denominator,
+            ]
+        )
+    else:
+        quaternion = np.asarray(
+            [
+                (rotation[2, 1] - rotation[1, 2]) / denominator,
+                (rotation[0, 2] - rotation[2, 0]) / denominator,
+                (rotation[1, 0] - rotation[0, 1]) / denominator,
+                value,
+            ]
+        )
+    quaternion /= np.linalg.norm(quaternion)
+    return -quaternion if quaternion[3] < 0.0 else quaternion
+
+
+def _rotation_vector_from_quaternion(quaternion: np.ndarray) -> np.ndarray:
+    vector = quaternion[:3]
+    norm = float(np.linalg.norm(vector))
+    if norm <= 1e-12:
+        return np.zeros(3, dtype=np.float64)
+    angle = 2.0 * np.arctan2(norm, float(quaternion[3]))
+    return vector * (angle / norm)
+
+
+def _rpy_from_rotation(rotation: np.ndarray) -> np.ndarray:
+    pitch = float(np.arcsin(np.clip(-rotation[2, 0], -1.0, 1.0)))
+    cosine = float(np.cos(pitch))
+    if abs(cosine) > 1e-9:
+        roll = float(np.arctan2(rotation[2, 1], rotation[2, 2]))
+        yaw = float(np.arctan2(rotation[1, 0], rotation[0, 0]))
+    else:
+        roll = 0.0
+        yaw = float(np.arctan2(-rotation[0, 1], rotation[1, 1]))
+    return np.asarray([roll, pitch, yaw], dtype=np.float64)
 
 
 def _validate_transforms(values: ArrayLike, label: str) -> np.ndarray:

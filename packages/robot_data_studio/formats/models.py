@@ -49,6 +49,7 @@ def conversion_report(
     warnings: list[str] | None = None,
     backend: dict[str, Any] | None = None,
     metadata_completeness: dict[str, Any] | None = None,
+    kinematic_correction: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "source_format": source.format,
@@ -61,4 +62,5 @@ def conversion_report(
         "warnings": warnings or [],
         "backend": backend or {},
         "metadata_completeness": metadata_completeness or {},
+        "kinematic_correction": kinematic_correction,
     }

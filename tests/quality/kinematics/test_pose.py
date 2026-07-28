@@ -7,6 +7,7 @@ from robot_data_studio.quality.kinematics import (
     InvalidPoseRepresentation,
     compute_se3_residuals,
     decode_rotations,
+    encode_rotations,
 )
 
 
@@ -52,6 +53,28 @@ def test_decode_rotations_projects_small_matrix_drift() -> None:
 
     assert np.allclose(decoded[0].T @ decoded[0], np.eye(3), atol=1e-10)
     assert np.linalg.det(decoded[0]) == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "representation",
+    [
+        "quaternion_xyzw",
+        "quaternion_wxyz",
+        "rotation_6d",
+        "rotation_matrix",
+        "rotation_vector",
+        "rpy",
+    ],
+)
+def test_encode_rotations_round_trips_all_supported_representations(
+    representation: str,
+) -> None:
+    rotations = decode_rotations([[0.31, -0.42, 0.57]], "rpy")
+
+    encoded = encode_rotations(rotations, representation)
+    decoded = decode_rotations(encoded, representation)
+
+    assert np.allclose(decoded, rotations, atol=1e-8)
 
 
 @pytest.mark.parametrize(

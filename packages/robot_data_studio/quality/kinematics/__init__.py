@@ -5,6 +5,7 @@ from .correction import (
     DiscoveryRefusal,
     fit_correction,
 )
+from .adapter import CorrectedDatasetAdapter
 from .discovery import DiscoveryRequest, ProfileCandidate, discover_profile
 from .engine import PinocchioKinematics
 from .models import (
@@ -16,12 +17,18 @@ from .models import (
     ResidualSummary,
     SE3ResidualResult,
 )
-from .pose import InvalidPoseRepresentation, compute_se3_residuals, decode_rotations
+from .pose import (
+    InvalidPoseRepresentation,
+    compute_se3_residuals,
+    decode_rotations,
+    encode_rotations,
+)
 
 __all__ = [
     "CorrectionMetrics",
     "CorrectionOptions",
     "CorrectionProposal",
+    "CorrectedDatasetAdapter",
     "DiscoveryRefusal",
     "DiscoveryRequest",
     "InvalidPoseRepresentation",
@@ -36,6 +43,7 @@ __all__ = [
     "SE3ResidualResult",
     "compute_se3_residuals",
     "decode_rotations",
+    "encode_rotations",
     "discover_profile",
     "fit_correction",
 ]

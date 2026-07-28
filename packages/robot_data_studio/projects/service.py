@@ -29,6 +29,7 @@ from robot_data_studio.quality import (
 from robot_data_studio.quality.kinematics import (
     CorrectionOptions,
     CorrectionProposal,
+    CorrectedDatasetAdapter,
     DiscoveryRefusal,
     DiscoveryRequest,
     discover_profile,
@@ -106,8 +107,10 @@ class ProjectService:
         output = output_base / f"{project_id}-{format_id}"
         if len(episode_indexes) == 1:
             output = output_base / f"{project_id}-episode-{episode_indexes[0]:06d}-{format_id}"
+        self._invalidate_active_kinematics_if_stale(project_id)
+        adapter = self._export_adapter(project_id)
         return self._formats.export_dataset(
-            adapter=self.reader(project_id),
+            adapter=adapter,
             target_format=format_id,
             episode_indexes=episode_indexes,
             output_root=output,
@@ -722,6 +725,35 @@ class ProjectService:
         digest.update(contiguous.tobytes())
         digest.update("\0".join(feature_names).encode("utf-8"))
         return digest.hexdigest()
+
+    def _export_adapter(self, project_id: str):
+        source = self.reader(project_id)
+        config = self.filter_config(project_id).kinematics
+        if config.profile is None or not config.accepted_proposal_id:
+            return source
+        proposal = next(
+            (
+                item
+                for item in self.kinematic_proposals(project_id)
+                if item.id == config.accepted_proposal_id and item.status == "accepted"
+            ),
+            None,
+        )
+        if proposal is None or not self._kinematic_proposal_is_current(project_id, proposal):
+            return source
+        manifest = {
+            "proposal_id": proposal.id,
+            "fingerprint": proposal.fingerprint,
+            "profile": proposal.profile.model_dump(mode="json"),
+            "confidence": proposal.confidence,
+            "evidence": proposal.evidence,
+            "warnings": proposal.warnings,
+            "before_training": proposal.before_training.model_dump(mode="json"),
+            "after_training": proposal.after_training.model_dump(mode="json"),
+            "before_held_out": proposal.before_held_out.model_dump(mode="json"),
+            "after_held_out": proposal.after_held_out.model_dump(mode="json"),
+        }
+        return CorrectedDatasetAdapter(source, config.profile, manifest)
 
     def _visual_quality_artifact_dir(self, project_id: str) -> Path:
         return self.project_artifact_dir(project_id) / "filters" / "visual-quality"
