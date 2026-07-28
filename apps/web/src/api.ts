@@ -256,6 +256,61 @@ export type FilterRun = {
   summary: FilterSummary;
 };
 
+export type KinematicResidualSummary = {
+  mean: number;
+  median: number;
+  p95: number;
+  maximum: number;
+};
+
+export type KinematicCorrectionMetrics = {
+  position: KinematicResidualSummary;
+  orientation: KinematicResidualSummary;
+  inlier_rate: number;
+};
+
+export type KinematicProfile = {
+  urdf_path: string;
+  fingerprint: string;
+  chains: Array<{
+    id: string;
+    end_effector_frame: string;
+    joints: Array<{
+      urdf_joint: string;
+      state_index: number;
+      sign: -1 | 1;
+      zero_offset: number;
+    }>;
+    logged_pose: {
+      position_indices: [number, number, number];
+      orientation_indices: number[];
+      orientation_representation: string;
+    };
+    base_transform: number[][];
+    tcp_transform: number[][];
+  }>;
+};
+
+export type KinematicCorrectionProposal = {
+  id: string;
+  fingerprint: string;
+  profile: KinematicProfile;
+  before_training: KinematicCorrectionMetrics;
+  after_training: KinematicCorrectionMetrics;
+  before_held_out: KinematicCorrectionMetrics;
+  after_held_out: KinematicCorrectionMetrics;
+  confidence: number;
+  candidate_margin: number;
+  evidence: string[];
+  warnings: string[];
+  status: "proposed" | "accepted" | "rejected" | "stale";
+};
+
+export type KinematicDiscoveryRefusal = {
+  reason: "insufficient_excitation" | "ambiguous" | "no_candidates" | "fit_failed";
+  evidence: string[];
+};
+
 export type FilterConfig = {
   gripper_indices: number[];
   enabled_filter_stages?: FilterStageId[];
@@ -282,8 +337,13 @@ export type FilterConfig = {
     joint_names: string[];
     joint_state_indices: number[];
     eef_position_indices: number[];
+    eef_orientation_indices?: number[];
+    eef_orientation_representation?: string | null;
     position_tolerance: number;
+    orientation_tolerance?: number;
     resolve_tcp_offset: boolean;
+    profile?: KinematicProfile | null;
+    accepted_proposal_id?: string | null;
   };
   time_sync: {
     timestamp_jitter_seconds: number;
@@ -535,4 +595,34 @@ export async function uploadKinematicsUrdf(projectId: string, file: File) {
     throw new Error(body.detail ?? "Request failed");
   }
   return response.json() as Promise<{ filename: string; path: string }>;
+}
+
+export function listKinematicProposals(projectId: string) {
+  return request<KinematicCorrectionProposal[]>(
+    `/api/projects/${projectId}/filters/kinematics/proposals`,
+  );
+}
+
+export function discoverKinematicCorrections(projectId: string) {
+  return request<KinematicCorrectionProposal | KinematicDiscoveryRefusal>(
+    `/api/projects/${projectId}/filters/kinematics/discover`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+}
+
+export function decideKinematicProposal(
+  projectId: string,
+  proposalId: string,
+  decision: "accept" | "reject" | "reset",
+) {
+  return request<KinematicCorrectionProposal>(
+    `/api/projects/${projectId}/filters/kinematics/proposals/${proposalId}/decision`,
+    {
+      method: "POST",
+      body: JSON.stringify({ decision }),
+    },
+  );
 }

@@ -1831,6 +1831,85 @@ test("opens the kinematic consistency view with URDF configuration controls", as
   expect(screen.getByText(/Pinocchio/)).toBeInTheDocument();
 });
 
+test("reviews and accepts a dynamic kinematic correction with SE3 evidence", async () => {
+  const user = userEvent.setup();
+  const proposal = kinematicProposalResponse();
+  const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    if (url === "/api/formats") return jsonResponse(formatsResponse());
+    if (url === "/api/projects") return jsonResponse(projectResponse());
+    if (url.endsWith("/episodes?limit=500")) return jsonResponse(episodesResponse());
+    if (url.includes("/filters/kinematic_consistency/episodes/0")) {
+      const detail = filterDetailResponse("kinematic_consistency");
+      (detail.parameters as unknown as Record<string, unknown>).urdf_path = "/tmp/astral.urdf";
+      return jsonResponse(detail);
+    }
+    if (url.endsWith("/filters/kinematics/proposals")) return jsonResponse([proposal]);
+    if (url.endsWith(`/proposals/${proposal.id}/decision`)) {
+      const decision = JSON.parse(String(init?.body)).decision as "accept" | "reset";
+      return jsonResponse({
+        ...proposal,
+        status: decision === "accept" ? "accepted" : "proposed",
+      });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal("confirm", vi.fn(() => true));
+  renderApp();
+
+  await importDatasetForTest(user);
+  await user.click(await screen.findByRole("button", { name: "Kinematic consistency" }));
+
+  expect(await screen.findByText("vector_mount")).toBeInTheDocument();
+  expect(screen.getByText("0.4000 m → 0.0010 m")).toBeInTheDocument();
+  expect(screen.getByText(/0.2000 rad .*11.46°.*0.0020 rad/)).toBeInTheDocument();
+  expect(screen.getByText("Selected by held-out SE(3) geometry.")).toBeInTheDocument();
+  expect(screen.getByText("Review base/TCP equivalence.")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Accept correction" }));
+  expect(await screen.findByText("Accepted")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Reset" }));
+  expect(await screen.findByText("Proposed")).toBeInTheDocument();
+  const decisions = fetch.mock.calls
+    .filter(([url]) => String(url).endsWith(`/proposals/${proposal.id}/decision`))
+    .map(([, init]) => JSON.parse(String(init?.body)).decision);
+  expect(decisions).toEqual(["accept", "reset"]);
+});
+
+test("shows an ambiguous discovery refusal without an accept action", async () => {
+  const user = userEvent.setup();
+  const fetch = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url === "/api/formats") return jsonResponse(formatsResponse());
+    if (url === "/api/projects") return jsonResponse(projectResponse());
+    if (url.endsWith("/episodes?limit=500")) return jsonResponse(episodesResponse());
+    if (url.includes("/filters/kinematic_consistency/episodes/0")) {
+      const detail = filterDetailResponse("kinematic_consistency");
+      (detail.parameters as unknown as Record<string, unknown>).urdf_path = "/tmp/astral.urdf";
+      return jsonResponse(detail);
+    }
+    if (url.endsWith("/filters/kinematics/proposals")) return jsonResponse([]);
+    if (url.endsWith("/filters/kinematics/discover")) {
+      return jsonResponse({
+        reason: "ambiguous",
+        evidence: ["The top candidate margin is below the safety threshold."],
+      });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal("fetch", fetch);
+  renderApp();
+
+  await importDatasetForTest(user);
+  await user.click(await screen.findByRole("button", { name: "Kinematic consistency" }));
+  await user.click(await screen.findByRole("button", { name: "Discover correction" }));
+
+  expect(await screen.findByText("Ambiguous mapping")).toBeInTheDocument();
+  expect(screen.getByText("The top candidate margin is below the safety threshold.")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Accept correction" })).not.toBeInTheDocument();
+});
+
 test("restores configured kinematics from imported project filter config", async () => {
   const user = userEvent.setup();
   vi.stubGlobal(
@@ -3131,5 +3210,55 @@ function filterDetailResponse(
     parameters: { alpha: 0.5, q01: 0.01, q99: 0.99, gripper_exempt: [6, 13] },
     findings: [{ code: "extreme_value", severity: "warn", message: "Detected out-of-bounds frames. Count: 1" }],
     skipped_reason: null,
+  };
+}
+
+function jsonResponse(body: unknown) {
+  return {
+    ok: true,
+    json: async () => body,
+  } as Response;
+}
+
+function kinematicProposalResponse() {
+  const summary = { mean: 0.1, median: 0.1, p95: 0.1, maximum: 0.1 };
+  return {
+    id: "proposal-123",
+    fingerprint: "fingerprint-123",
+    profile: {
+      urdf_path: "/tmp/astral.urdf",
+      fingerprint: "fingerprint-123",
+      chains: [
+        {
+          id: "arm",
+          end_effector_frame: "vector_mount",
+          joints: [{ urdf_joint: "alpha_axis", state_index: 0, sign: 1, zero_offset: 0 }],
+          logged_pose: {
+            position_indices: [2, 3, 4],
+            orientation_indices: [5, 6, 7, 8],
+            orientation_representation: "quaternion_xyzw",
+          },
+          base_transform: [],
+          tcp_transform: [],
+        },
+      ],
+    },
+    before_training: { position: summary, orientation: summary, inlier_rate: 0.2 },
+    after_training: { position: summary, orientation: summary, inlier_rate: 0.98 },
+    before_held_out: {
+      position: { ...summary, p95: 0.4 },
+      orientation: { ...summary, p95: 0.2 },
+      inlier_rate: 0.2,
+    },
+    after_held_out: {
+      position: { ...summary, p95: 0.001 },
+      orientation: { ...summary, p95: 0.002 },
+      inlier_rate: 0.98,
+    },
+    confidence: 0.96,
+    candidate_margin: 0.42,
+    evidence: ["Selected by held-out SE(3) geometry."],
+    warnings: ["Review base/TCP equivalence."],
+    status: "proposed",
   };
 }

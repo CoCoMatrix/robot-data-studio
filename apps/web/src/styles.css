@@ -1041,6 +1041,83 @@ button:disabled { cursor: wait; opacity: .55; }
 }
 .filter-status.review { color: #ffd99a; border-color: #5a4218; background: #2c2110; }
 .filter-status.skipped { color: #aab7c5; }
+.kinematic-workbench { display: grid; gap: 10px; }
+.kinematic-correction-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: #0d151e;
+  border: 1px solid #2b3d50;
+  border-radius: 9px;
+}
+.kinematic-correction-panel > header,
+.kinematic-proposal > header,
+.kinematic-proposal > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kinematic-correction-panel > header > div,
+.kinematic-proposal > header > div { display: grid; gap: 3px; }
+.kinematic-hint { margin: 0; color: #8fa0b2; }
+.kinematic-refusal {
+  margin: 0;
+  padding: 10px;
+  color: #ffd99a;
+  background: #2c2110;
+  border: 1px solid #5a4218;
+  border-radius: 7px;
+}
+.kinematic-refusal p { margin: 5px 0 0; }
+.kinematic-proposal {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: #111d28;
+  border: 1px solid #30475c;
+  border-radius: 8px;
+}
+.kinematic-proposal.accepted { border-color: #26735c; }
+.kinematic-proposal.stale { opacity: 0.72; border-style: dashed; }
+.kinematic-proposal > header small { color: #91a4b7; }
+.kinematic-proposal > header > span {
+  padding: 3px 7px;
+  color: #b9c9d8;
+  background: #17283a;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.kinematic-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.kinematic-metrics > div,
+.kinematic-preview {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  background: #0a121a;
+  border: 1px solid #25384a;
+  border-radius: 7px;
+}
+.kinematic-metrics small,
+.kinematic-preview span { color: #8296aa; }
+.kinematic-evidence { margin: 0; padding-left: 18px; color: #bfd0df; }
+.kinematic-warning { margin: 0; color: #ffd18a; }
+.kinematic-proposal > footer { justify-content: flex-end; }
+.kinematic-preview { grid-template-columns: auto 1fr 1fr; align-items: center; }
+.kinematic-advanced {
+  color: #9eb0c1;
+  background: #0d151e;
+  border: 1px solid #263444;
+  border-radius: 8px;
+}
+.kinematic-advanced > summary { padding: 10px 12px; cursor: pointer; font-weight: 800; }
+.kinematic-advanced .kinematic-config { border: 0; border-top: 1px solid #263444; border-radius: 0 0 8px 8px; }
 .kinematic-config {
   display: grid;
   grid-template-columns: 120px repeat(3, minmax(130px, 1fr)) auto;
