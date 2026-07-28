@@ -65,9 +65,19 @@ def compute_se3_residuals(predicted: ArrayLike, logged: ArrayLike) -> SE3Residua
     )
     errors = predicted_inverse @ logged_array
     position_errors = np.linalg.norm(errors[:, :3, 3], axis=1)
-    traces = np.trace(errors[:, :3, :3], axis1=1, axis2=2)
+    rotations = errors[:, :3, :3]
+    traces = np.trace(rotations, axis1=1, axis2=2)
     cosines = np.clip((traces - 1.0) * 0.5, -1.0, 1.0)
-    orientation_errors = np.arccos(cosines)
+    skew_vectors = 0.5 * np.stack(
+        (
+            rotations[:, 2, 1] - rotations[:, 1, 2],
+            rotations[:, 0, 2] - rotations[:, 2, 0],
+            rotations[:, 1, 0] - rotations[:, 0, 1],
+        ),
+        axis=1,
+    )
+    sines = np.linalg.norm(skew_vectors, axis=1)
+    orientation_errors = np.arctan2(sines, cosines)
     return SE3ResidualResult(
         position_errors=position_errors,
         orientation_errors=orientation_errors,
