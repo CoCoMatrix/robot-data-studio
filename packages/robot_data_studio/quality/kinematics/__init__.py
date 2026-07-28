@@ -1,3 +1,11 @@
+from .correction import (
+    CorrectionMetrics,
+    CorrectionOptions,
+    CorrectionProposal,
+    DiscoveryRefusal,
+    fit_correction,
+)
+from .discovery import DiscoveryRequest, ProfileCandidate, discover_profile
 from .engine import PinocchioKinematics
 from .models import (
     JointFieldMapping,
@@ -11,8 +19,12 @@ from .models import (
 from .pose import InvalidPoseRepresentation, compute_se3_residuals, decode_rotations
 
 __all__ = [
-    "InvalidPoseRepresentation",
+    "CorrectionMetrics",
+    "CorrectionOptions",
+    "CorrectionProposal",
+    "DiscoveryRefusal",
     "DiscoveryRequest",
+    "InvalidPoseRepresentation",
     "JointFieldMapping",
     "KinematicChainProfile",
     "KinematicProfile",
@@ -25,5 +37,5 @@ __all__ = [
     "compute_se3_residuals",
     "decode_rotations",
     "discover_profile",
+    "fit_correction",
 ]
-from .discovery import DiscoveryRequest, ProfileCandidate, discover_profile

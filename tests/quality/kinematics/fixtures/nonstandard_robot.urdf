@@ -4,6 +4,8 @@
   <link name="wrist_shell"/>
   <link name="camera_mount"/>
   <link name="prism_mount"/>
+  <link name="complex_shell"/>
+  <link name="vector_mount"/>
   <link name="other_shell"/>
   <link name="sensor_mount"/>
 
@@ -23,6 +25,18 @@
     <parent link="camera_mount"/>
     <child link="prism_mount"/>
     <origin xyz="0 0 0" rpy="0.2 -0.1 0.3"/>
+  </joint>
+  <joint name="epsilon_axis" type="revolute">
+    <parent link="prism_mount"/>
+    <child link="complex_shell"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.141592653589793" upper="3.141592653589793" effort="10" velocity="10"/>
+  </joint>
+  <joint name="tau_mount" type="fixed">
+    <parent link="complex_shell"/>
+    <child link="vector_mount"/>
+    <origin xyz="0.4 0 0" rpy="0 0 0"/>
   </joint>
 
   <joint name="gamma_axis" type="revolute">
