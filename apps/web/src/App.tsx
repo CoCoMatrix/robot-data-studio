@@ -2400,6 +2400,61 @@ function VisualQualityPanel({
         </div>
       </section>
 
+      <section className="visual-model-summary">
+        <div>
+          <small>{copy.filterDetail.visualTechnicalScore}</small>
+          <strong>{formatOptionalScore(evidence.technical_score)}</strong>
+        </div>
+        <div>
+          <small>{copy.filterDetail.visualPercentile}</small>
+          <strong>{formatOptionalPercentile(evidence.percentile)}</strong>
+        </div>
+        <div>
+          <small>{copy.filterDetail.visualBackend}</small>
+          <strong>{evidence.requested_backend ?? "auto"} → {evidence.effective_backend ?? "rules"}</strong>
+        </div>
+        <div className={evidence.hard_failure ? "critical" : ""}>
+          <small>{copy.filterDetail.visualHardFailure}</small>
+          <strong>{evidence.hard_failure ? copy.filterDetail.visualYes : copy.filterDetail.visualNo}</strong>
+          {evidence.hard_failure_reasons?.length
+            ? <span>{evidence.hard_failure_reasons.map((reason) => visualIssueLabel(copy, reason)).join(" · ")}</span>
+            : null}
+        </div>
+      </section>
+
+      {evidence.model_status && evidence.model_status !== "scored" && (
+        <div className="visual-model-notice">
+          <strong>{copy.filterDetail.visualModelUnavailable}</strong>
+          <span>{copy.filterDetail.visualModelStatuses[evidence.model_status] ?? evidence.model_status}</span>
+        </div>
+      )}
+
+      {(evidence.camera_scores?.length ?? 0) > 0 && (
+        <section className="visual-camera-score-table">
+          <div className="visual-section-heading"><strong>{copy.filterDetail.visualCameraScores}</strong></div>
+          <table>
+            <thead><tr>
+              <th>{copy.filterDetail.visualCamera}</th>
+              <th>{copy.filterDetail.visualTechnicalScore}</th>
+              <th>{copy.filterDetail.visualPercentile}</th>
+              <th>{copy.filterDetail.visualCohortSize}</th>
+              <th>{copy.filterDetail.visualPriority}</th>
+              <th>{copy.filterDetail.visualModelStatus}</th>
+            </tr></thead>
+            <tbody>{evidence.camera_scores!.map((score) => (
+              <tr key={score.camera} className={`priority-${score.priority}`}>
+                <td>{score.camera}</td>
+                <td>{formatOptionalScore(score.technical_score)}</td>
+                <td>{formatOptionalPercentile(score.percentile)}</td>
+                <td>{score.cohort_size}</td>
+                <td>{copy.filterDetail.visualPriorities[score.priority] ?? score.priority}</td>
+                <td>{copy.filterDetail.visualModelStatuses[score.model_status] ?? score.model_status}{score.error_code ? ` · ${score.error_code}` : ""}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </section>
+      )}
+
       {evidence.incidents.length > 0 && (
         <section className="visual-issue-timeline" aria-label={copy.filterDetail.visualTimeline}>
           <div className="visual-section-heading">
@@ -2530,7 +2585,10 @@ function VisualIncidentCard({
     >
       <header>
         <div>
-          <span className="visual-issue-pill">{visualIssueLabel(copy, incident.issue)}</span>
+          <span className={`visual-issue-pill ${incident.hard_failure ? "critical" : ""}`}>
+            {visualIssueLabel(copy, incident.issue)}
+            {incident.hard_failure ? ` · ${copy.filterDetail.visualHardFailure}` : ""}
+          </span>
           <strong>{incident.camera}</strong>
         </div>
         <small>{incident.sample_count} {copy.filterDetail.visualSamples}</small>
@@ -2579,6 +2637,14 @@ function VisualIncidentCard({
       </footer>
     </article>
   );
+}
+
+function formatOptionalScore(value: number | null | undefined) {
+  return value == null ? "—" : value.toFixed(3);
+}
+
+function formatOptionalPercentile(value: number | null | undefined) {
+  return value == null ? "—" : `${(value * 100).toFixed(1)}%`;
 }
 
 function VisualMetricsCharts({ detail }: { detail: FilterDetail }) {

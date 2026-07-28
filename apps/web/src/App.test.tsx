@@ -1482,6 +1482,9 @@ test("opens the visual quality detail view from the filter label", async () => {
   expect(screen.getByText("1 issue interval")).toBeInTheDocument();
   expect(screen.getByText("1 / 1 affected")).toBeInTheDocument();
   expect(screen.getByText("Pass with 1 low-rate anomaly")).toBeInTheDocument();
+  expect(screen.getAllByText("0.720").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("4.0%").length).toBeGreaterThan(0);
+  expect(screen.getByText("Camera technical scores")).toBeInTheDocument();
   expect(screen.getAllByText("Frame 2").length).toBeGreaterThan(0);
   expect(screen.getByRole("button", { name: "Metrics & thresholds" })).toHaveAttribute(
     "aria-expanded",
@@ -3003,6 +3006,25 @@ function filterDetailResponse(
         affected_camera_count: 1,
         episode_frame_count: 1100,
         episode_duration_seconds: 22,
+        technical_score: 0.72,
+        percentile: 0.04,
+        hard_failure: false,
+        hard_failure_reasons: [],
+        requested_backend: "auto",
+        effective_backend: "dover_mobile",
+        model_status: "scored",
+        artifact_fingerprint: "fixture",
+        camera_scores: [
+          {
+            camera: "cam_high",
+            technical_score: 0.72,
+            percentile: 0.04,
+            cohort_size: 25,
+            priority: "review",
+            model_status: "scored",
+            error_code: null,
+          },
+        ],
         incidents: [
           {
             id: "cam_high:blur:2:2",
@@ -3016,6 +3038,8 @@ function filterDetailResponse(
             worst_value: 8.5,
             threshold: 18,
             representative_frames: [{ frame: 2, timestamp: 1 }],
+            severity: "warning",
+            hard_failure: false,
           },
         ],
         metrics: {

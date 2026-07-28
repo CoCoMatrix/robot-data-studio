@@ -175,6 +175,18 @@ export type VisualQualityIncident = {
     frame: number;
     timestamp: number;
   }>;
+  severity?: "warning" | "critical";
+  hard_failure?: boolean;
+};
+
+export type VisualCameraScore = {
+  camera: string;
+  technical_score: number | null;
+  percentile: number | null;
+  cohort_size: number;
+  priority: "normal" | "review" | "high";
+  model_status: "scored" | "unavailable" | "failed";
+  error_code: string | null;
 };
 
 export type VisualQualityDetail = {
@@ -186,6 +198,15 @@ export type VisualQualityDetail = {
   episode_duration_seconds: number;
   incidents: VisualQualityIncident[];
   metrics: Record<string, VisualQualityMetricSample[]>;
+  technical_score?: number | null;
+  percentile?: number | null;
+  camera_scores?: VisualCameraScore[];
+  hard_failure?: boolean;
+  hard_failure_reasons?: string[];
+  requested_backend?: "auto" | "rules" | "dover_mobile";
+  effective_backend?: "rules" | "dover_mobile";
+  model_status?: "scored" | "partial" | "unavailable" | "failed";
+  artifact_fingerprint?: string | null;
 };
 
 export type FilterDetail = {

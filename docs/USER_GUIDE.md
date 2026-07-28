@@ -333,3 +333,35 @@ ls -lh .rds-artifacts/*.hdf5
 - 数据集报告：每个数据集自动生成质量 summary 和可导出的 report
 
 第一版的目标不是把所有功能堆满，而是先把“导入 → 可视化回放 → 导出”这条最核心的闭环跑稳。
+
+## 13. Visual Quality 与 DOVER-Mobile
+
+Visual Quality 默认使用 `auto` backend：规则扫描始终运行；只有显式配置独立 Python 与本地 checkpoint 后，才会批量运行 DOVER-Mobile technical quality。RDS 不会自动下载、打包或提交模型权重。
+
+内部非商业环境可固定使用 DOVER 官方仓库 commit `f1ddc96215bc7fbcf8f315c65d47905f339c3419`，并在隔离环境中安装依赖：
+
+```bash
+git clone https://github.com/VQAssessment/DOVER.git
+cd DOVER
+git checkout f1ddc96215bc7fbcf8f315c65d47905f339c3419
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+在项目的 `filter_config.json` 中配置本机绝对路径：
+
+```json
+{
+  "visual_quality": {
+    "backend": "dover_mobile",
+    "dover_python_path": "/absolute/path/to/DOVER/.venv/bin/python",
+    "checkpoint_path": "/absolute/path/to/DOVER-Mobile.pth",
+    "model_device": "cuda",
+    "batch_size": 8
+  }
+}
+```
+
+CPU 模式会自动将实际 batch size 限制为 1。runner 只执行 technical 分支；单相机失败会标记为 partial，runner 整体失败则回退 rules，filter run 仍会成功。完整 run 会写入带配置/checkpoint fingerprint 的 episode detail 和 camera cohort baseline；单 episode 重跑只复用最近一次匹配的完整 baseline。
+
+DOVER 官方仓库使用非商业许可证，部署前请核对 [DOVER 仓库](https://github.com/VQAssessment/DOVER) 与 [S-Lab License](https://raw.githubusercontent.com/VQAssessment/DOVER/master/LICENSE)。

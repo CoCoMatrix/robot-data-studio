@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 from uuid import uuid4
 
@@ -25,6 +26,11 @@ from robot_data_studio.quality.filter_service import (
     DatasetFilterService,
     ProgressCallback,
     infer_gripper_indices,
+)
+from robot_data_studio.quality.dover_backend import (
+    VideoTechnicalScore,
+    checkpoint_file_info,
+    visual_quality_fingerprint,
 )
 from robot_data_studio.quality.models import utc_now
 from robot_data_studio.quality.store import CleaningStateStore, VlmSettingsStore, build_summary
@@ -260,7 +266,16 @@ class ProjectService:
             filter_config = filter_config.model_copy(
                 update={"enabled_filter_stages": enabled_filter_stages}
             )
-        result = DatasetFilterService(self.reader(project_id), filter_config).run(
+        cohort_baseline = (
+            self._load_visual_quality_baseline(project_id, filter_config)
+            if episode_indexes is not None
+            else []
+        )
+        result = DatasetFilterService(
+            self.reader(project_id),
+            filter_config,
+            cohort_baseline=cohort_baseline,
+        ).run(
             on_progress=on_progress,
             episode_indexes=episode_indexes,
         )
@@ -269,6 +284,8 @@ class ProjectService:
                 result.summary.model_dump_json(indent=2),
                 encoding="utf-8",
             )
+            if "visual_quality" in filter_config.enabled_filter_stages:
+                self._save_visual_quality_artifacts(project_id, filter_config, result)
         return result
 
     def filter_summary(self, project_id: str) -> FilterSummary:
@@ -291,6 +308,10 @@ class ProjectService:
         }
         if stage_id not in allowed:
             raise KeyError(f"Filter stage {stage_id!r} not found")
+        if stage_id == "visual_quality":
+            artifact = self._load_visual_quality_artifact(project_id, episode_index)
+            if artifact is not None:
+                return artifact
         return self._filter_service(project_id).detail(stage_id, episode_index)  # type: ignore[arg-type]
 
     def visual_quality_frame(
@@ -396,6 +417,140 @@ class ProjectService:
 
     def _filter_summary_store(self, project_id: str) -> Path:
         return self.project_artifact_dir(project_id) / "filter_summary.json"
+
+    def _visual_quality_artifact_dir(self, project_id: str) -> Path:
+        return self.project_artifact_dir(project_id) / "filters" / "visual-quality"
+
+    def _save_visual_quality_artifacts(
+        self,
+        project_id: str,
+        config: FilterConfig,
+        result: FilterRun,
+    ) -> None:
+        output_dir = self._visual_quality_artifact_dir(project_id)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        fingerprint = self._visual_quality_fingerprint(project_id, config)
+        checkpoint = checkpoint_file_info(config.visual_quality)
+        baseline: list[dict[str, object]] = []
+        for episode_index, detail in result.visual_quality_details.items():
+            visual = detail.visual_quality
+            if visual is None:
+                continue
+            visual = visual.model_copy(update={"artifact_fingerprint": fingerprint})
+            persisted = detail.model_copy(update={"visual_quality": visual})
+            payload = {
+                "fingerprint": fingerprint,
+                "checkpoint": checkpoint,
+                "detail": persisted.model_dump(mode="json"),
+            }
+            self._atomic_write_json(
+                output_dir / f"episode-{episode_index:06d}.json",
+                payload,
+            )
+            for score in visual.camera_scores:
+                if score.technical_score is not None:
+                    baseline.append(
+                        {
+                            "episode_index": episode_index,
+                            "camera": score.camera,
+                            "technical_score": score.technical_score,
+                            "error_code": None,
+                        }
+                    )
+        self._atomic_write_json(
+            output_dir / "baseline.json",
+            {
+                "fingerprint": fingerprint,
+                "checkpoint": checkpoint,
+                "scores": baseline,
+            },
+        )
+        expected = {
+            output_dir / f"episode-{episode_index:06d}.json"
+            for episode_index in result.visual_quality_details
+        }
+        for stale in output_dir.glob("episode-*.json"):
+            if stale not in expected:
+                stale.unlink()
+
+    def _load_visual_quality_artifact(
+        self,
+        project_id: str,
+        episode_index: int,
+    ) -> FilterDetail | None:
+        config = self.filter_config(project_id)
+        path = self._visual_quality_artifact_dir(project_id) / f"episode-{episode_index:06d}.json"
+        if not path.is_file():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("fingerprint") != self._visual_quality_fingerprint(project_id, config):
+                return None
+            return FilterDetail.model_validate(payload["detail"])
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def _load_visual_quality_baseline(
+        self,
+        project_id: str,
+        config: FilterConfig,
+    ) -> list[VideoTechnicalScore]:
+        path = self._visual_quality_artifact_dir(project_id) / "baseline.json"
+        if not path.is_file():
+            return []
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("fingerprint") != self._visual_quality_fingerprint(project_id, config):
+                return []
+            return [VideoTechnicalScore(**item) for item in payload.get("scores", [])]
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            return []
+
+    @staticmethod
+    def _atomic_write_json(path: Path, payload: dict[str, object]) -> None:
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        temporary.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        temporary.replace(path)
+
+    def _visual_quality_fingerprint(self, project_id: str, config: FilterConfig) -> str:
+        reader = self.reader(project_id)
+        episodes = []
+        for episode in reader.list_episodes():
+            videos = []
+            for camera, relative_path in sorted((episode.video_files or {}).items()):
+                videos.append(
+                    {
+                        "camera": camera,
+                        "path": relative_path,
+                        "start": episode.video_start_seconds.get(camera),
+                        "end": episode.video_end_seconds.get(camera),
+                        "file": self._source_file_info(reader.root / relative_path),
+                    }
+                )
+            episodes.append(
+                {
+                    "episode_index": episode.episode_index,
+                    "length": episode.length,
+                    "duration_seconds": episode.duration_seconds,
+                    "data_file": episode.data_file,
+                    "data_file_info": self._source_file_info(reader.root / episode.data_file),
+                    "videos": videos,
+                }
+            )
+        payload = {
+            "visual_config": visual_quality_fingerprint(config.visual_quality),
+            "dataset": reader.metadata().model_dump(mode="json"),
+            "episodes": episodes,
+        }
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
+    @staticmethod
+    def _source_file_info(path: Path) -> dict[str, int | None]:
+        if not path.is_file():
+            return {"size": None, "mtime_ns": None}
+        stat = path.stat()
+        return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
 
     def _infer_kinematics_config(self, project_id: str) -> FilterKinematicsConfig:
         metadata = self.project(project_id).dataset

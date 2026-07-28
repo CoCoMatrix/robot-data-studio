@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from robot_data_studio.quality.filter_models import FilterVisualQualityConfig
+from robot_data_studio.quality.filter_models import FilterVisualQualityConfig, VisualCameraScore
 
 
 @dataclass(frozen=True)
@@ -22,6 +22,8 @@ class VisualQualityRow:
     end_frame: int | None = None
     end_timestamp: float | None = None
     metric_value: float | None = None
+    severity: str = "warning"
+    hard_failure: bool = False
 
 
 @dataclass(frozen=True)
@@ -51,6 +53,8 @@ class VisualQualityIncident:
     worst_value: float | str
     threshold: float | str
     representative_frames: list[VisualQualityEvidenceFrame]
+    severity: str = "warning"
+    hard_failure: bool = False
 
 
 @dataclass
@@ -64,6 +68,13 @@ class VisualQualityResult:
     issue_counts: dict[str, int] = field(default_factory=dict)
     critical_issue: bool = False
     camera_count: int = 0
+    technical_score: float | None = None
+    percentile: float | None = None
+    camera_scores: list[VisualCameraScore] = field(default_factory=list)
+    hard_failure_reasons: list[str] = field(default_factory=list)
+    requested_backend: str = "auto"
+    effective_backend: str = "rules"
+    model_status: str = "unavailable"
 
 
 def analyze_sampled_frames(
@@ -71,6 +82,7 @@ def analyze_sampled_frames(
     config: FilterVisualQualityConfig,
     *,
     has_motion: bool,
+    robot_motion: list[float] | None = None,
     camera: str = "",
     timestamps: list[float] | None = None,
     frame_indexes: list[int] | None = None,
@@ -99,6 +111,8 @@ def analyze_sampled_frames(
                     "bad_frame",
                     "invalid",
                     "rgb uint8",
+                    severity="critical",
+                    hard_failure=True,
                 )
             )
             if timestamp is not None:
@@ -109,7 +123,6 @@ def analyze_sampled_frames(
         laplacian = _laplacian_variance(gray)
         mean = float(np.mean(gray))
         std = float(np.std(gray))
-        p75 = float(np.percentile(gray, 75))
         sharpness.append(laplacian)
         brightness.append(mean)
         contrast.append(std)
@@ -123,62 +136,11 @@ def analyze_sampled_frames(
                     contrast=round(std, 4),
                 )
             )
-        if laplacian < config.blur_laplacian_threshold:
-            rows.append(
-                VisualQualityRow(
-                    frame_index,
-                    timestamp,
-                    camera,
-                    "blur",
-                    round(laplacian, 4),
-                    config.blur_laplacian_threshold,
-                    metric_value=laplacian,
-                )
-            )
-        if _is_dark_frame(mean, p75, config):
-            rows.append(
-                VisualQualityRow(
-                    frame_index,
-                    timestamp,
-                    camera,
-                    "dark",
-                    _exposure_value(mean, p75),
-                    _exposure_threshold(
-                        config.dark_mean_threshold,
-                        config.dark_global_mean_threshold,
-                        config.dark_global_p75_threshold,
-                    ),
-                    metric_value=mean,
-                )
-            )
-        if _is_bright_frame(mean, p75, config):
-            rows.append(
-                VisualQualityRow(
-                    frame_index,
-                    timestamp,
-                    camera,
-                    "bright",
-                    _exposure_value(mean, p75),
-                    _exposure_threshold(
-                        config.bright_mean_threshold,
-                        config.bright_global_mean_threshold,
-                        config.bright_global_p75_threshold,
-                    ),
-                    metric_value=mean,
-                )
-            )
-        if std < config.low_contrast_std_threshold:
-            rows.append(
-                VisualQualityRow(
-                    frame_index,
-                    timestamp,
-                    camera,
-                    "low_contrast",
-                    round(std, 4),
-                    config.low_contrast_std_threshold,
-                    metric_value=std,
-                )
-            )
+    resolved_timestamps = timestamps or [index / config.sample_fps for index in range(frame_count)]
+    resolved_frames = frame_indexes or list(range(frame_count))
+    rows.extend(
+        _screen_rows(frames, config, camera, resolved_timestamps, resolved_frames)
+    )
 
     freeze_rows = _freeze_rows(
         frames,
@@ -187,12 +149,13 @@ def analyze_sampled_frames(
         camera,
         timestamps,
         frame_indexes,
+        robot_motion,
     )
     rows.extend(freeze_rows)
     issue_counts = _issue_counts(rows)
     issue_count = len(rows)
-    issue_rate = issue_count / max(frame_count, 1)
-    score = max(0.0, 1.0 - issue_rate)
+    hard_failure = any(row.hard_failure for row in rows)
+    score = 0.0 if hard_failure else 1.0
     return VisualQualityResult(
         frame_count=frame_count,
         issue_count=issue_count,
@@ -205,7 +168,7 @@ def analyze_sampled_frames(
         },
         metrics={camera: metrics} if camera else {},
         issue_counts=issue_counts,
-        critical_issue=bool(freeze_rows) or issue_counts.get("bad_frame", 0) > 0,
+        critical_issue=hard_failure,
     )
 
 
@@ -236,8 +199,6 @@ def sample_video_frames(
         [
             "-vf",
             f"fps={config.sample_fps},scale={config.sample_width}:{config.sample_height}",
-            "-frames:v",
-            str(config.max_frames_per_video),
             "-f",
             "rawvideo",
             "-pix_fmt",
@@ -245,18 +206,26 @@ def sample_video_frames(
             "pipe:1",
         ]
     )
-    try:
-        output = subprocess.run(command, check=True, capture_output=True).stdout
-    except (OSError, subprocess.CalledProcessError):
-        return []
     frame_size = config.sample_width * config.sample_height * 3
-    if frame_size <= 0 or len(output) < frame_size:
+    if frame_size <= 0:
         return []
-    frames = []
-    for offset in range(0, len(output) - frame_size + 1, frame_size):
-        frame = np.frombuffer(output[offset : offset + frame_size], dtype=np.uint8)
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError:
+        return []
+    frames: list[np.ndarray] = []
+    assert process.stdout is not None
+    while True:
+        output = process.stdout.read(frame_size)
+        if len(output) < frame_size:
+            break
+        frame = np.frombuffer(output, dtype=np.uint8)
         frames.append(frame.reshape((config.sample_height, config.sample_width, 3)).copy())
-    return frames
+    return frames if process.wait() == 0 else []
 
 
 def extract_video_frame_jpeg(video_path: Path, timestamp: float, width: int) -> bytes:
@@ -304,6 +273,31 @@ def has_signal_motion(states: np.ndarray, actions: np.ndarray) -> bool:
     return bool(motion_values and max(motion_values) > 1e-6)
 
 
+def robot_motion_by_sample(
+    states: np.ndarray,
+    actions: np.ndarray,
+    *,
+    robot_timestamps: list[float],
+    sample_timestamps: list[float],
+) -> list[float]:
+    """Return maximum normalized state/action delta in each visual sample window."""
+    if not sample_timestamps:
+        return []
+    result = [0.0]
+    timestamp_array = np.asarray(robot_timestamps, dtype=np.float64)
+    for previous, current in zip(sample_timestamps[:-1], sample_timestamps[1:], strict=True):
+        indices = np.flatnonzero((timestamp_array >= previous) & (timestamp_array <= current))
+        maximum = 0.0
+        for values in (states, actions):
+            if values.ndim != 2 or len(indices) < 2 or values.shape[0] != len(timestamp_array):
+                continue
+            window = values[indices]
+            if np.all(np.isfinite(window)):
+                maximum = max(maximum, float(np.max(np.abs(np.diff(window, axis=0)))))
+        result.append(maximum)
+    return result
+
+
 def _grayscale(frame: np.ndarray) -> np.ndarray | None:
     if frame.ndim != 3 or frame.shape[2] != 3:
         return None
@@ -330,44 +324,107 @@ def _freeze_rows(
     camera: str,
     timestamps: list[float] | None,
     frame_indexes: list[int] | None,
+    robot_motion: list[float] | None,
 ) -> list[VisualQualityRow]:
-    if not has_motion or len(frames) < config.freeze_min_run:
+    if len(frames) < 2:
         return []
-    run_start = 0
-    run_length = 1
-    rows: list[VisualQualityRow] = []
+    timestamps = timestamps or [index / config.sample_fps for index in range(len(frames))]
+    frame_indexes = frame_indexes or list(range(len(frames)))
+    if robot_motion is None:
+        robot_motion = [
+            config.robot_motion_threshold * 2 if has_motion else 0.0
+            for _ in frames
+        ]
+    active: list[bool] = [False]
     for index in range(1, len(frames)):
         mse = _frame_mse(frames[index - 1], frames[index])
-        if mse is not None and mse <= config.freeze_mse_threshold:
-            run_length += 1
-        else:
-            if run_length >= config.freeze_min_run:
-                rows.append(
-                    _freeze_row(
-                        run_start,
-                        index - 1,
-                        run_length,
-                        config,
-                        camera,
-                        timestamps,
-                        frame_indexes,
-                    )
-                )
-            run_start = index
-            run_length = 1
-    if run_length >= config.freeze_min_run:
+        motion = robot_motion[index] if index < len(robot_motion) else 0.0
+        active.append(
+            mse is not None
+            and mse <= config.freeze_mse_threshold
+            and motion >= config.robot_motion_threshold
+        )
+    rows: list[VisualQualityRow] = []
+    for start, end in _true_runs(active):
+        start_frame_index = max(0, start - 1)
+        duration = timestamps[end] - timestamps[start_frame_index]
+        hard_failure = duration + 1e-9 >= config.freeze_duration_seconds
         rows.append(
-            _freeze_row(
-                run_start,
-                len(frames) - 1,
-                run_length,
-                config,
+            VisualQualityRow(
+                frame_indexes[start_frame_index],
+                timestamps[start_frame_index],
                 camera,
-                timestamps,
-                frame_indexes,
+                "freeze",
+                f"{duration:.3f}s",
+                config.freeze_duration_seconds,
+                end_frame=frame_indexes[end],
+                end_timestamp=timestamps[end],
+                metric_value=float(end - start + 1),
+                severity="critical" if hard_failure else "warning",
+                hard_failure=hard_failure,
             )
         )
     return rows
+
+
+def _screen_rows(
+    frames: list[np.ndarray],
+    config: FilterVisualQualityConfig,
+    camera: str,
+    timestamps: list[float],
+    frame_indexes: list[int],
+) -> list[VisualQualityRow]:
+    classifications: dict[str, list[bool]] = {"black_screen": [], "white_screen": []}
+    ratios: dict[str, list[float]] = {"black_screen": [], "white_screen": []}
+    for frame in frames:
+        gray = _grayscale(frame)
+        if gray is None:
+            black_ratio = white_ratio = 0.0
+        else:
+            black_ratio = float(np.mean(gray < config.black_pixel_threshold))
+            white_ratio = float(np.mean(gray > config.white_pixel_threshold))
+        ratios["black_screen"].append(black_ratio)
+        ratios["white_screen"].append(white_ratio)
+        classifications["black_screen"].append(black_ratio > config.saturated_area_threshold)
+        classifications["white_screen"].append(white_ratio > config.saturated_area_threshold)
+
+    interval = 1.0 / config.sample_fps
+    rows: list[VisualQualityRow] = []
+    for issue, flags in classifications.items():
+        for start, end in _true_runs(flags):
+            duration = timestamps[end] - timestamps[start] + interval
+            hard_failure = duration + 1e-9 >= config.hard_failure_duration_seconds
+            worst_ratio = max(ratios[issue][start : end + 1])
+            rows.append(
+                VisualQualityRow(
+                    frame_indexes[start],
+                    timestamps[start],
+                    camera,
+                    issue,
+                    round(worst_ratio, 4),
+                    config.saturated_area_threshold,
+                    end_frame=frame_indexes[end],
+                    end_timestamp=timestamps[end],
+                    metric_value=worst_ratio,
+                    severity="critical" if hard_failure else "warning",
+                    hard_failure=hard_failure,
+                )
+            )
+    return rows
+
+
+def _true_runs(flags: list[bool]) -> list[tuple[int, int]]:
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for index, flag in enumerate(flags):
+        if flag and start is None:
+            start = index
+        elif not flag and start is not None:
+            runs.append((start, index - 1))
+            start = None
+    if start is not None:
+        runs.append((start, len(flags) - 1))
+    return runs
 
 
 def _freeze_row(
@@ -477,6 +534,8 @@ def _incident_from_rows(rows: list[VisualQualityRow]) -> VisualQualityIncident:
         worst_value=worst.value,
         threshold=worst.threshold,
         representative_frames=representatives,
+        severity="critical" if any(row.hard_failure for row in rows) else "warning",
+        hard_failure=any(row.hard_failure for row in rows),
     )
 
 

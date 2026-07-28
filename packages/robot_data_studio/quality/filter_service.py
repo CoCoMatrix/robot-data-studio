@@ -28,6 +28,13 @@ from robot_data_studio.quality.filter_models import (
     VisualQualityEvidenceFrame,
     VisualQualityIncident,
     VisualQualityMetricSample,
+    VisualCameraScore,
+)
+from robot_data_studio.quality.dover_backend import (
+    VideoSample,
+    VideoTechnicalScore,
+    camera_percentiles,
+    run_dover_batch,
 )
 from robot_data_studio.quality.metadata_completeness import (
     analyze_metadata_completeness,
@@ -47,6 +54,7 @@ from robot_data_studio.quality.visual_quality import (
     aggregate_visual_quality_incidents,
     analyze_sampled_frames,
     has_signal_motion,
+    robot_motion_by_sample,
     sample_video_frames,
 )
 
@@ -83,9 +91,15 @@ def infer_gripper_indices(reader: DatasetAdapter) -> list[int]:
 
 
 class DatasetFilterService:
-    def __init__(self, reader: DatasetAdapter, config: FilterConfig) -> None:
+    def __init__(
+        self,
+        reader: DatasetAdapter,
+        config: FilterConfig,
+        cohort_baseline: list[VideoTechnicalScore] | None = None,
+    ) -> None:
         self.reader = reader
         self.config = config
+        self._cohort_baseline = cohort_baseline or []
         self._sampled_video_cache: dict[VisualSampleCacheKey, list[np.ndarray]] = {}
         self._episode_frame_cache: dict[int, list] = {}
         self._visual_sample_executor: ThreadPoolExecutor | None = None
@@ -94,6 +108,7 @@ class DatasetFilterService:
             VisualSampleCacheKey,
             Future[list[np.ndarray]],
         ] = {}
+        self._visual_result_cache: dict[int, tuple[VisualQualityResult, str | None]] = {}
 
     def _is_stage_enabled(self, stage_id: FilterStageId) -> bool:
         return stage_id in self.config.enabled_filter_stages
@@ -113,7 +128,21 @@ class DatasetFilterService:
         episode_indexes: list[int] | None = None,
     ) -> FilterRun:
         summary = self.summary(on_progress=on_progress, episode_indexes=episode_indexes)
-        return FilterRun(run_id=uuid4().hex[:12], status="succeeded", summary=summary)
+        visual_quality_details = {
+            episode_index: self._visual_quality_detail(
+                episode_index,
+                np.empty((0, 0), dtype=float),
+                np.empty((0, 0), dtype=float),
+            )
+            for episode_index, (_result, skipped_reason) in self._visual_result_cache.items()
+            if skipped_reason is None
+        }
+        return FilterRun(
+            run_id=uuid4().hex[:12],
+            status="succeeded",
+            summary=summary,
+            visual_quality_details=visual_quality_details,
+        )
 
     def summary(
         self,
@@ -154,6 +183,13 @@ class DatasetFilterService:
         totals = {stage_id: 0 for stage_id in STAGE_LABELS}
         self._start_visual_sampling_jobs(episodes, integrity_by_episode)
         try:
+            self._prepare_visual_quality(
+                episodes,
+                states_by_episode,
+                actions_by_episode,
+                integrity_by_episode,
+                reference_stats,
+            )
             for index, episode in enumerate(episodes, start=1):
                 states = states_by_episode[episode.episode_index]
                 actions = actions_by_episode[episode.episode_index]
@@ -215,7 +251,13 @@ class DatasetFilterService:
         normalized_states = self._normalize(states, reference["state"])
         normalized_actions = self._normalize(actions, reference["action"])
         if stage_id == "visual_quality":
-            return self._visual_quality_detail(episode_index, states, actions)
+            return self._visual_quality_detail(
+                episode_index,
+                states,
+                actions,
+                normalized_states,
+                normalized_actions,
+            )
         if stage_id == "sudden_change":
             return self._sudden_change_detail(
                 episode_index,
@@ -421,7 +463,15 @@ class DatasetFilterService:
                 "action": self._extreme_bounds(reference["action"]),
             }
         if self._is_stage_enabled("visual_quality"):
-            statuses["visual_quality"] = self._visual_quality_status(episode, states, actions)
+            normalized_states = self._normalize_with_stats(states, reference_stats["state"])
+            normalized_actions = self._normalize_with_stats(actions, reference_stats["action"])
+            statuses["visual_quality"] = self._visual_quality_status(
+                episode,
+                states,
+                actions,
+                normalized_states,
+                normalized_actions,
+            )
         if self._is_stage_enabled("sudden_change"):
             if reference_stats is None:
                 reference_stats = {
@@ -499,8 +549,16 @@ class DatasetFilterService:
         episode,
         states: np.ndarray,
         actions: np.ndarray,
+        normalized_states: np.ndarray | None = None,
+        normalized_actions: np.ndarray | None = None,
     ) -> EpisodeFilterStageStatus:
-        result, skipped_reason = self._visual_quality_result(episode, states, actions)
+        result, skipped_reason = self._visual_quality_result(
+            episode,
+            states,
+            actions,
+            normalized_states,
+            normalized_actions,
+        )
         if skipped_reason:
             return EpisodeFilterStageStatus(
                 count=0,
@@ -508,20 +566,133 @@ class DatasetFilterService:
                 score=None,
                 skipped_reason=skipped_reason,
             )
-        issue_rate = result.issue_count / max(result.frame_count, 1)
+        model_review = any(score.priority != "normal" for score in result.camera_scores)
         severity = (
             "critical"
-            if result.issue_count and (issue_rate >= 0.10 or result.critical_issue)
+            if result.critical_issue
             else "warning"
-            if result.issue_count
+            if result.issue_count or model_review
             else "none"
         )
         return EpisodeFilterStageStatus(
-            count=result.issue_count,
-            status="review" if issue_rate >= 0.02 else "passed",
+            count=result.issue_count + sum(score.priority != "normal" for score in result.camera_scores),
+            status="review" if result.critical_issue or model_review else "passed",
             score=result.score,
             severity=severity,
         )
+
+    def _prepare_visual_quality(
+        self,
+        episodes: list,
+        states_by_episode: dict[int, np.ndarray],
+        actions_by_episode: dict[int, np.ndarray],
+        integrity_by_episode: dict[int, list[FilterFinding]],
+        reference_stats: dict[str, tuple[np.ndarray, np.ndarray]],
+    ) -> None:
+        if not self._is_stage_enabled("visual_quality"):
+            return
+        samples: list[VideoSample] = []
+        for episode in episodes:
+            if integrity_by_episode.get(episode.episode_index):
+                continue
+            states = states_by_episode[episode.episode_index]
+            actions = actions_by_episode[episode.episode_index]
+            self._visual_quality_result(
+                episode,
+                states,
+                actions,
+                self._normalize_with_stats(states, reference_stats["state"]),
+                self._normalize_with_stats(actions, reference_stats["action"]),
+            )
+            for camera, relative_path in (getattr(episode, "video_files", {}) or {}).items():
+                path = self.reader.root / relative_path
+                if not path.is_file():
+                    continue
+                _, start_seconds, duration_seconds = self._visual_sample_bounds(episode, camera, path)
+                samples.append(
+                    VideoSample(
+                        episode.episode_index,
+                        camera,
+                        path,
+                        start_seconds,
+                        duration_seconds,
+                    )
+                )
+
+        scores = run_dover_batch(samples, self.config.visual_quality)
+        current_keys = {(score.episode_index, score.camera) for score in scores}
+        baseline = [
+            score
+            for score in self._cohort_baseline
+            if (score.episode_index, score.camera) not in current_keys
+        ]
+        ranked = camera_percentiles(
+            [*baseline, *scores],
+            min_cohort_size=self.config.visual_quality.min_cohort_size,
+        )
+        by_key = {(score.episode_index, score.camera): score for score in scores}
+        expected_cameras = self.reader.metadata().video_keys
+        for episode in episodes:
+            cached = self._visual_result_cache.get(episode.episode_index)
+            if cached is None or cached[1] is not None:
+                continue
+            result = cached[0]
+            camera_scores: list[VisualCameraScore] = []
+            episode_cameras = list(
+                dict.fromkeys(
+                    [
+                        *expected_cameras,
+                        *(getattr(episode, "video_files", {}) or {}),
+                    ]
+                )
+            )
+            for camera in episode_cameras:
+                score = by_key.get((episode.episode_index, camera))
+                percentile, cohort_size = ranked.get((episode.episode_index, camera), (None, 0))
+                priority = "normal"
+                if percentile is not None and percentile <= self.config.visual_quality.high_priority_percentile:
+                    priority = "high"
+                elif percentile is not None and percentile <= self.config.visual_quality.review_percentile:
+                    priority = "review"
+                camera_scores.append(
+                    VisualCameraScore(
+                        camera=camera,
+                        technical_score=score.technical_score if score else None,
+                        percentile=percentile,
+                        cohort_size=cohort_size,
+                        priority=priority,
+                        model_status=(
+                            "scored"
+                            if score and score.technical_score is not None
+                            else "unavailable"
+                            if score is None or score.error_code == "model_unavailable"
+                            else "failed"
+                        ),
+                        error_code=score.error_code if score else "model_unavailable",
+                    )
+                )
+            result.camera_scores = camera_scores
+            valid = [item.technical_score for item in camera_scores if item.technical_score is not None]
+            all_scored = bool(camera_scores) and len(valid) == result.camera_count == len(camera_scores)
+            if all_scored:
+                result.technical_score = (
+                    min(valid)
+                    if self.config.visual_quality.camera_aggregation == "min"
+                    else float(np.median(valid))
+                )
+                result.percentile = min(
+                    (item.percentile for item in camera_scores if item.percentile is not None),
+                    default=None,
+                )
+                result.effective_backend = "dover_mobile"
+                result.model_status = "scored"
+                if not result.critical_issue:
+                    result.score = result.technical_score
+            elif valid:
+                result.model_status = "partial"
+            elif any(item.error_code == "runner_failed" for item in camera_scores):
+                result.model_status = "failed"
+            result.requested_backend = self.config.visual_quality.backend
 
     def _start_visual_sampling_jobs(
         self,
@@ -632,15 +803,63 @@ class DatasetFilterService:
         episode,
         states: np.ndarray,
         actions: np.ndarray,
+        normalized_states: np.ndarray | None = None,
+        normalized_actions: np.ndarray | None = None,
     ) -> tuple[VisualQualityResult, str | None]:
+        cached = self._visual_result_cache.get(episode.episode_index)
+        if cached is not None:
+            return cached
+        metadata = self.reader.metadata()
         video_files = getattr(episode, "video_files", {}) or {}
         if not video_files:
-            return VisualQualityResult(frame_count=0, issue_count=0, score=0.0), "video_missing"
+            expected_cameras = metadata.video_keys
+            if not expected_cameras:
+                value = (
+                    VisualQualityResult(frame_count=0, issue_count=0, score=0.0),
+                    "video_missing",
+                )
+                self._visual_result_cache[episode.episode_index] = value
+                return value
+            result = VisualQualityResult(
+                frame_count=0,
+                issue_count=len(expected_cameras),
+                score=0.0,
+                rows=[
+                    _visual_row(None, None, camera, "video_missing", "unmapped", "exists")
+                    for camera in expected_cameras
+                ],
+                issue_counts={"video_missing": len(expected_cameras)},
+                critical_issue=True,
+                camera_count=len(expected_cameras),
+                hard_failure_reasons=["video_missing"],
+            )
+            value = (result, None)
+            self._visual_result_cache[episode.episode_index] = value
+            return value
         config = self.config.visual_quality
-        metadata = self.reader.metadata()
         has_motion = has_signal_motion(states, actions)
+        normalized_states = (
+            normalized_states if normalized_states is not None else self._normalize(states, states)
+        )
+        normalized_actions = (
+            normalized_actions if normalized_actions is not None else self._normalize(actions, actions)
+        )
+        episode_frames = self._read_episode_frames(episode.episode_index)
+        first_robot_timestamp = episode_frames[0].timestamp if episode_frames else 0.0
+        robot_timestamps = [
+            float(frame.timestamp - first_robot_timestamp) for frame in episode_frames
+        ]
         combined = VisualQualityResult(frame_count=0, issue_count=0, score=1.0)
-        existing_videos = 0
+        missing_cameras = sorted(set(metadata.video_keys) - set(video_files))
+        for camera in missing_cameras:
+            combined.rows.append(
+                _visual_row(None, None, camera, "video_missing", "unmapped", "exists")
+            )
+            combined.issue_count += 1
+            combined.issue_counts["video_missing"] = (
+                combined.issue_counts.get("video_missing", 0) + 1
+            )
+        used_cache_keys: list[VisualSampleCacheKey] = []
         for camera, relative_path in video_files.items():
             path = self.reader.root / relative_path
             if not path.is_file():
@@ -650,12 +869,12 @@ class DatasetFilterService:
                 combined.issue_count += 1
                 combined.issue_counts["video_missing"] = combined.issue_counts.get("video_missing", 0) + 1
                 continue
-            existing_videos += 1
             cache_key, start_seconds, duration_seconds = self._visual_sample_bounds(
                 episode,
                 camera,
                 path,
             )
+            used_cache_keys.append(cache_key)
             frames = self._sample_video_frames_cached(
                 cache_key,
                 path,
@@ -679,6 +898,12 @@ class DatasetFilterService:
                 )
                 for timestamp in timestamps
             ]
+            robot_motion = robot_motion_by_sample(
+                normalized_states,
+                normalized_actions,
+                robot_timestamps=robot_timestamps,
+                sample_timestamps=timestamps,
+            )
             result = analyze_sampled_frames(
                 frames,
                 config,
@@ -686,6 +911,7 @@ class DatasetFilterService:
                 camera=camera,
                 timestamps=timestamps,
                 frame_indexes=frame_indexes,
+                robot_motion=robot_motion,
             )
             combined.frame_count += result.frame_count
             combined.issue_count += result.issue_count
@@ -697,14 +923,27 @@ class DatasetFilterService:
                 combined.series[key] = values
             for issue, count in result.issue_counts.items():
                 combined.issue_counts[issue] = combined.issue_counts.get(issue, 0) + count
-        if existing_videos == 0:
-            return combined, "video_missing"
-        combined.camera_count = existing_videos
-        denominator = max(combined.frame_count, 1)
-        combined.score = max(0.0, 1.0 - combined.issue_count / denominator)
-        if combined.issue_counts.get("video_missing", 0):
+        for cache_key in used_cache_keys:
+            self._sampled_video_cache.pop(cache_key, None)
+        combined.camera_count = len(set(metadata.video_keys) | set(video_files))
+        combined.score = 1.0
+        hard_reasons = [
+            issue
+            for issue in ("video_missing", "decode_failed")
+            if combined.issue_counts.get(issue, 0)
+        ]
+        hard_reasons.extend(
+            row.issue
+            for row in combined.rows
+            if row.hard_failure and row.issue not in hard_reasons
+        )
+        combined.hard_failure_reasons = list(dict.fromkeys(hard_reasons))
+        if combined.hard_failure_reasons:
             combined.critical_issue = True
-        return combined, None
+            combined.score = 0.0
+        value = (combined, None)
+        self._visual_result_cache[episode.episode_index] = value
+        return value
 
     def _kinematic_status(self, states: np.ndarray) -> EpisodeFilterStageStatus:
         skipped_reason = self._default_skipped_reason("kinematic_consistency")
@@ -1099,9 +1338,17 @@ class DatasetFilterService:
         episode_index: int,
         states: np.ndarray,
         actions: np.ndarray,
+        normalized_states: np.ndarray | None = None,
+        normalized_actions: np.ndarray | None = None,
     ) -> FilterDetail:
         episode = self.reader.episode(episode_index)
-        result, skipped_reason = self._visual_quality_result(episode, states, actions)
+        result, skipped_reason = self._visual_quality_result(
+            episode,
+            states,
+            actions,
+            normalized_states,
+            normalized_actions,
+        )
         if skipped_reason:
             skipped = self._skipped_detail(
                 "visual_quality",
@@ -1153,7 +1400,7 @@ class DatasetFilterService:
             [
                 FilterFinding(
                     code="visual_quality",
-                    severity="warn",
+                    severity="critical" if result.critical_issue else "warn",
                     message=f"Detected visual quality issue(s). {issue_summary}",
                 )
             ]
@@ -1173,7 +1420,7 @@ class DatasetFilterService:
             sampled_frame_count=result.frame_count,
             camera_count=result.camera_count,
             issue_sample_count=len(issue_samples),
-            affected_camera_count=len({incident.camera for incident in incidents}),
+            affected_camera_count=len({row.camera for row in result.rows}),
             episode_frame_count=episode.length,
             episode_duration_seconds=episode.duration_seconds,
             incidents=[
@@ -1198,6 +1445,8 @@ class DatasetFilterService:
                         )
                         for frame in incident.representative_frames
                     ],
+                    severity=incident.severity,
+                    hard_failure=incident.hard_failure,
                 )
                 for incident in incidents
             ],
@@ -1214,12 +1463,25 @@ class DatasetFilterService:
                 ]
                 for camera, samples in result.metrics.items()
             },
+            technical_score=result.technical_score,
+            percentile=result.percentile,
+            camera_scores=result.camera_scores,
+            hard_failure=result.critical_issue,
+            hard_failure_reasons=result.hard_failure_reasons,
+            requested_backend=self.config.visual_quality.backend,
+            effective_backend=result.effective_backend,
+            model_status=result.model_status,
         )
         return FilterDetail(
             stage_id="visual_quality",
             episode_index=episode_index,
             title=STAGE_LABELS["visual_quality"],
-            status="review" if result.issue_count / max(result.frame_count, 1) >= 0.02 else "passed",
+            status=(
+                "review"
+                if result.critical_issue
+                or any(score.priority != "normal" for score in result.camera_scores)
+                else "passed"
+            ),
             series=result.series,
             thresholds={
                 "visual_quality": {
@@ -1232,6 +1494,14 @@ class DatasetFilterService:
                     "bright_global_p75": self.config.visual_quality.bright_global_p75_threshold,
                     "low_contrast_std": self.config.visual_quality.low_contrast_std_threshold,
                     "freeze_mse": self.config.visual_quality.freeze_mse_threshold,
+                    "black_pixel": self.config.visual_quality.black_pixel_threshold,
+                    "white_pixel": self.config.visual_quality.white_pixel_threshold,
+                    "saturated_area": self.config.visual_quality.saturated_area_threshold,
+                    "hard_failure_duration_seconds": (
+                        self.config.visual_quality.hard_failure_duration_seconds
+                    ),
+                    "freeze_duration_seconds": self.config.visual_quality.freeze_duration_seconds,
+                    "robot_motion": self.config.visual_quality.robot_motion_threshold,
                 }
             },
             table_rows=rows,

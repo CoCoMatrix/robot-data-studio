@@ -263,7 +263,7 @@ def _vlm_findings(evaluation: VlmEvaluation | None, error: str | None) -> list[Q
 class EpisodeQualityScorer:
     """A local scorer adapter shaped after RoboticsData/score_lerobot_episodes output."""
 
-    scorer_version = "quality-rules-v2"
+    scorer_version = "quality-rules-v3-visual-technical"
 
     def __init__(self, vlm_evaluator: VlmTaskSuccessEvaluator | None = None) -> None:
         self._vlm_evaluator = vlm_evaluator or VlmTaskSuccessEvaluator()
@@ -357,6 +357,19 @@ class EpisodeQualityScorer:
             status = "excluded"
         else:
             status = _status_for_episode(score, config, vlm_evaluation)
+            visual_stage = filter_episode.stage_status.get("visual_quality")
+            if (
+                status == "excluded"
+                and visual_stage is not None
+                and visual_stage.severity != "critical"
+            ):
+                non_visual_scores = {
+                    stage_id: value
+                    for stage_id, value in per_attribute_scores.items()
+                    if stage_id != "visual_quality"
+                }
+                if not non_visual_scores or _weighted_score(non_visual_scores, config) >= config.review_threshold:
+                    status = "review"
         return EpisodeQualityResult(
             episode_index=episode_index,
             score=score,

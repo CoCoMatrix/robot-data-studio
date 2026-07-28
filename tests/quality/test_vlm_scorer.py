@@ -24,7 +24,7 @@ class FakeReader:
             total_episodes=1,
             total_frames=3,
             fps=10,
-            video_keys=["observation.image"],
+            video_keys=[],
             scalar_keys=["observation.state", "action"],
             features={},
         )
@@ -39,9 +39,9 @@ class FakeReader:
             duration_seconds=0.3,
             tasks=["push the block to the target"],
             data_file="data.parquet",
-            video_files={"observation.image": "videos/episode.mp4"},
-            video_start_seconds={"observation.image": 0.0},
-            video_end_seconds={"observation.image": 0.3},
+            video_files={},
+            video_start_seconds={},
+            video_end_seconds={},
         )
 
     def read_episode_frames(self, episode_index: int) -> list[EpisodeFrame]:
