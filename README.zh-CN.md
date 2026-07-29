@@ -62,6 +62,14 @@ RDS 在本机运行，数据集始终留在你的磁盘上，不上传云端。�
 
 当前质量检查包括视觉质量、突变检测、state/action 对齐、极值、元数据完整性、运动学一致性、姿态对齐，以及可选的 VLM 任务完成度检查。流水线结束后可查看报告仪表盘、质量分布、问题发现、信号曲线与建议操作。
 
+## Codex/CLI 具身数据清洗
+
+仓库还包含一套面向 Human/Robot 异构训练数据的严格流程。它主要通过 `$curate-embodied-data` Codex skill 和 CLI 使用，不以旧版 Web Filter 列表作为当前科学合同。流程覆盖：有界 train-only 接入、absolute pose/validity 准备、独立选择 `qwen-cleaning-v2` 检查、按数据源配置 VLM prompt、GR3 URDF/SAM3 复核、eligible manifest、官方 Hugging Face LeRobot V3 发布以及官方 loader 回环审计。
+
+在人工 mask 标定之前，官方 SAM3 只负责发现和排序待复核数据。C2 会输出 `review_queue.json`、员工可直接查看的 `review_queue.csv`、逐帧叠图和 contact sheet；它不会删除源数据，也不会自动排除 episode。
+
+完整流程和快速使用方法见[具身数据清洗指南](docs/curation/README.md)。可复用 skill 位于 [`.codex/skills/curate-embodied-data`](.codex/skills/curate-embodied-data/SKILL.md)。
+
 ## 环境要求
 
 - Python 3.11+

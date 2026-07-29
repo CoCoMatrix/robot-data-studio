@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "CheckControl": {
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weight"
+        }
+      },
+      "title": "CheckControl",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "qwen-cleaning-v2",
+      "default": "qwen-cleaning-v2",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "human_extensions": {
+      "additionalProperties": {
+        "$ref": "#/$defs/CheckControl"
+      },
+      "title": "Human Extensions",
+      "type": "object"
+    },
+    "qwen": {
+      "additionalProperties": {
+        "$ref": "#/$defs/CheckControl"
+      },
+      "title": "Qwen",
+      "type": "object"
+    }
+  },
+  "required": [
+    "qwen",
+    "human_extensions"
+  ],
+  "title": "QualityContractProfile",
+  "type": "object"
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "robot-data-studio.block-robot-c2-lens-scope-audit.v2",
+  "date_utc": "2026-07-28",
+  "selection": {
+    "split": "train",
+    "source_episode_ids": ["0", "1", "2"],
+    "sampled_frames_per_episode": 3,
+    "held_out_opened": false
+  },
+  "source_embodiment_authority": {
+    "path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/SCIENTIFIC_CONTRACT_ADDENDUM_V3.json",
+    "sha256": "8768b305ff7e3e700aa1ca3eff1a191c0c239e1c038cbd6ea1f82e3cf562e63d",
+    "task_claim": "upper-body grasp policy with posture-pitch control",
+    "whole_body_policy": false,
+    "decision": "render every visual on pose-authorized upper-body links; exclude the unrecorded 12-DOF leg branches and disclose them in every report"
+  },
+  "lens_authority_conflict": {
+    "frozen_sidecar_path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/configs/data/robot_camera0_extrinsic_v1.json",
+    "frozen_sidecar_sha256": "903ca96fbdc64d4def6ce6e79daf85a96a65b14d63a7eac1595a77c45cc5cf54",
+    "sidecar_claim": "stored_video_undistorted=false",
+    "bounded_observation": "Applying the 14D coefficients systematically contracts both arm silhouettes. Using stored_K_832x480_candidate directly aligns the upper-body visuals on every sampled frame.",
+    "provisional_v2_decision": "Treat stored Camera0 pixels as already rectified for C2 projection while retaining raw K, 14D coefficients, display affine, and the conflict in evidence. This does not modify the frozen sidecar and cannot establish calibrated thresholds."
+  },
+  "method": {
+    "renderer": "opengl_triangle_zbuffer_v1",
+    "mesh": "fourier-robot-descriptions 0.2.7 full raw visual triangles on pose-authorized upper-body links; no decimation",
+    "observed_mask": "local official facebook/sam3@3c879f39826c prompt=robot",
+    "comparison": ["sidecar 14D distortion then display affine", "stored K with no additional distortion"]
+  },
+  "frames": [
+    {"episode_id": "0", "frame_index": 2, "timestamp": 0.066666670, "sam_confidence": 0.913574219, "iou_14d": 0.301605242, "iou_stored_k": 0.519728601},
+    {"episode_id": "0", "frame_index": 208, "timestamp": 6.933333397, "sam_confidence": 0.872070312, "iou_14d": 0.332514555, "iou_stored_k": 0.417667161},
+    {"episode_id": "0", "frame_index": 414, "timestamp": 13.800000191, "sam_confidence": 0.887207031, "iou_14d": 0.319767540, "iou_stored_k": 0.453935729},
+    {"episode_id": "1", "frame_index": 2, "timestamp": 0.066666670, "sam_confidence": 0.875000000, "iou_14d": 0.299472960, "iou_stored_k": 0.532738862},
+    {"episode_id": "1", "frame_index": 1967, "timestamp": 65.566665649, "sam_confidence": 0.946289062, "iou_14d": 0.611482917, "iou_stored_k": 0.641505389},
+    {"episode_id": "1", "frame_index": 3932, "timestamp": 131.066665649, "sam_confidence": 0.793945312, "iou_14d": 0.368279991, "iou_stored_k": 0.499991793},
+    {"episode_id": "2", "frame_index": 2, "timestamp": 0.066666670, "sam_confidence": 0.900878906, "iou_14d": 0.448563213, "iou_stored_k": 0.546199613},
+    {"episode_id": "2", "frame_index": 490, "timestamp": 16.333333969, "sam_confidence": 0.940429688, "iou_14d": 0.593970983, "iou_stored_k": 0.687325318},
+    {"episode_id": "2", "frame_index": 978, "timestamp": 32.599998474, "sam_confidence": 0.846191406, "iou_14d": 0.338392484, "iou_stored_k": 0.591189581}
+  ],
+  "aggregate": {
+    "sidecar_14d": {"iou": 0.401561098, "precision": 0.685759966, "recall": 0.482755691, "coverage": 0.152948607},
+    "stored_k_no_additional_distortion": {"iou": 0.543364672, "precision": 0.729063060, "recall": 0.674689175, "coverage": 0.157601051}
+  },
+  "status": "provisional train-only visual correction; review evidence only",
+  "hard_reject_allowed": false
+}

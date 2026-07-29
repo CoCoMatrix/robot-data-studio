@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Human × Robot 数据清洗原型｜汇报简报</title>
+  <style>
+    :root {
+      --ink: #10253f;
+      --muted: #5b6b7b;
+      --paper: #f4f1e9;
+      --card: rgba(255, 255, 255, 0.78);
+      --line: rgba(16, 37, 63, 0.15);
+      --orange: #f06f3c;
+      --cyan: #20a7a0;
+      --yellow: #e5b83f;
+      --red: #cf4f55;
+      --shadow: 0 24px 70px rgba(35, 45, 55, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(16, 37, 63, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 37, 63, 0.045) 1px, transparent 1px),
+        var(--paper);
+      background-size: 32px 32px;
+      font-family: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 20;
+      width: var(--progress, 0%);
+      height: 4px;
+      background: linear-gradient(90deg, var(--orange), var(--yellow), var(--cyan));
+      transition: width 120ms linear;
+    }
+
+    a { color: inherit; }
+    button { font: inherit; }
+    .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+    .accent { color: var(--orange); }
+    .teal { color: var(--cyan); }
+    .muted { color: var(--muted); }
+
+    .rail {
+      position: fixed;
+      z-index: 10;
+      top: 50%;
+      right: 22px;
+      display: grid;
+      gap: 9px;
+      transform: translateY(-50%);
+    }
+
+    .rail a {
+      width: 9px;
+      height: 9px;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      background: var(--paper);
+      text-indent: -9999px;
+      transition: 180ms ease;
+    }
+
+    .rail a.active { background: var(--orange); border-color: var(--orange); transform: scale(1.45); }
+
+    .slide {
+      min-height: 100vh;
+      padding: clamp(42px, 7vw, 96px) clamp(24px, 8vw, 130px);
+      scroll-snap-align: start;
+      display: grid;
+      align-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide::after {
+      content: attr(data-index);
+      position: absolute;
+      right: clamp(34px, 7vw, 110px);
+      bottom: 24px;
+      color: rgba(16, 37, 63, 0.32);
+      font: 700 12px/1 "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.18em;
+    }
+
+    .wrap { width: min(1180px, 100%); margin: 0 auto; position: relative; z-index: 1; }
+    .kicker {
+      margin: 0 0 18px;
+      color: var(--orange);
+      font: 800 12px/1.2 "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      max-width: 980px;
+      margin-bottom: 26px;
+      font-size: clamp(52px, 8.5vw, 116px);
+      line-height: 0.93;
+      letter-spacing: -0.065em;
+    }
+
+    h2 {
+      max-width: 940px;
+      margin-bottom: 36px;
+      font-size: clamp(36px, 5.4vw, 74px);
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+    }
+
+    h3 { margin-bottom: 10px; font-size: 20px; line-height: 1.2; }
+    .lead { max-width: 830px; color: var(--muted); font-size: clamp(18px, 2vw, 26px); line-height: 1.55; }
+    .tiny { font-size: 12px; line-height: 1.6; color: var(--muted); }
+
+    .hero-mark {
+      position: absolute;
+      z-index: 0;
+      right: -8vw;
+      top: 8vh;
+      width: min(48vw, 660px);
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+    }
+
+    .hero-mark::before,
+    .hero-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .hero-mark::before { inset: 17%; border: 32px solid rgba(32, 167, 160, 0.15); }
+    .hero-mark::after { inset: 39%; background: var(--orange); box-shadow: var(--shadow); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 52px;
+    }
+
+    .stat, .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .stat { padding: 20px; }
+    .stat strong { display: block; font-size: clamp(28px, 4vw, 52px); letter-spacing: -0.05em; }
+    .stat span { color: var(--muted); font-size: 13px; }
+
+    .grid-2, .grid-3 { display: grid; gap: 18px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { padding: clamp(22px, 3vw, 34px); }
+    .card p, .card li { color: var(--muted); line-height: 1.65; }
+    .card ul { margin: 14px 0 0; padding-left: 1.2em; }
+
+    .problem-card { min-height: 270px; position: relative; overflow: hidden; }
+    .problem-card::before {
+      content: attr(data-code);
+      position: absolute;
+      right: 18px;
+      top: 12px;
+      color: rgba(16, 37, 63, 0.06);
+      font: 900 74px/1 "SFMono-Regular", Consolas, monospace;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .tier {
+      min-height: 230px;
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--cyan);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      position: relative;
+    }
+
+    .tier:nth-child(2) { border-top-color: #4b93c4; }
+    .tier:nth-child(3) { border-top-color: var(--yellow); }
+    .tier:nth-child(4) { border-top-color: var(--orange); }
+    .tier:nth-child(5) { border-top-color: var(--red); }
+    .tier b { display: block; margin-bottom: 30px; font: 900 28px/1 "SFMono-Regular", Consolas, monospace; }
+    .tier p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .tier small { position: absolute; bottom: 18px; left: 18px; color: var(--cyan); font-weight: 800; }
+
+    .outcomes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 34px; }
+    .outcome { padding: 18px; border-radius: 14px; color: white; }
+    .outcome:nth-child(1) { background: #9c3541; }
+    .outcome:nth-child(2) { background: #be7133; }
+    .outcome:nth-child(3) { background: #307b87; }
+    .outcome:nth-child(4) { background: #425875; }
+    .outcome strong { display: block; font-size: 17px; }
+    .outcome span { font-size: 12px; opacity: 0.78; }
+
+    .pilot-layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; }
+    .dataset-card { min-height: 420px; }
+    .dataset-card.human { border-top: 7px solid var(--orange); }
+    .dataset-card.robot { border-top: 7px solid var(--cyan); }
+    .episode-row { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .episode-row:last-child { border-bottom: 0; }
+    .episode-row span { color: var(--muted); }
+    .pill { display: inline-flex; padding: 5px 9px; border-radius: 99px; background: rgba(32, 167, 160, 0.1); color: #147771; font-size: 11px; font-weight: 800; }
+    .pill.na { background: rgba(16, 37, 63, 0.08); color: var(--muted); }
+    .pill.review { background: rgba(240, 111, 60, 0.12); color: #a84722; }
+
+    .metric-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 16px; background: rgba(255,255,255,.65); }
+    .metric-table th, .metric-table td { padding: 13px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .metric-table th { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .metric-table td:first-child { width: 58px; font: 900 15px/1 "SFMono-Regular", Consolas, monospace; }
+    .metric-table td:nth-child(2) { font-weight: 760; }
+    .metric-table tr:last-child td { border-bottom: 0; }
+
+    .meter { height: 9px; border-radius: 9px; background: rgba(16,37,63,.08); overflow: hidden; }
+    .meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--yellow)); border-radius: inherit; }
+    .metric-stack { display: grid; gap: 15px; }
+    .metric-line { display: grid; grid-template-columns: 170px 1fr 60px; gap: 14px; align-items: center; }
+    .metric-line span { font-size: 13px; font-weight: 700; }
+    .metric-line em { font-size: 12px; font-style: normal; text-align: right; color: var(--muted); }
+
+    .evidence-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+    .evidence { padding: 18px; border-left: 4px solid var(--cyan); background: rgba(255,255,255,.55); }
+    .evidence strong { display: block; font-size: 28px; }
+    .evidence span { color: var(--muted); font-size: 12px; }
+
+    .guardrails { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .guard {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.66);
+    }
+    .guard b { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--ink); color: white; }
+    .guard p { margin: 5px 0 0; color: var(--muted); line-height: 1.5; }
+
+    .next-list { display: grid; gap: 12px; counter-reset: next; }
+    .next-item {
+      counter-increment: next;
+      display: grid;
+      grid-template-columns: 72px 1fr auto;
+      gap: 22px;
+      align-items: center;
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .next-item::before { content: "0" counter(next); font: 900 30px/1 "SFMono-Regular", Consolas, monospace; color: var(--orange); }
+    .next-item p { margin: 5px 0 0; color: var(--muted); }
+
+    .speaker-note {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 30px;
+      padding: 10px 14px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .controls {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+    }
+    .controls button {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: rgba(244, 241, 233, .85);
+      cursor: pointer;
+    }
+
+    @media (max-width: 850px) {
+      .rail { display: none; }
+      .stats, .grid-3, .pipeline, .outcomes, .evidence-strip { grid-template-columns: repeat(2, 1fr); }
+      .grid-2, .pilot-layout, .guardrails { grid-template-columns: 1fr; }
+      .metric-line { grid-template-columns: 130px 1fr 46px; }
+      .slide { min-height: auto; padding-block: 74px; }
+      .hero-mark { opacity: .45; }
+    }
+
+    @media (max-width: 540px) {
+      .stats, .grid-3, .pipeline, .outcomes, .evidence-strip { grid-template-columns: 1fr; }
+      .tier { min-height: 180px; }
+      .next-item { grid-template-columns: 50px 1fr; }
+      .next-item .pill { grid-column: 2; justify-self: start; }
+      .metric-table { font-size: 12px; }
+      .metric-table th, .metric-table td { padding: 10px 7px; }
+    }
+
+    @media print {
+      .rail, .controls, body::before { display: none; }
+      body { background: white; }
+      .slide { min-height: 100vh; break-after: page; padding: 48px; }
+      .card, .stat { box-shadow: none; background: white; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="rail" aria-label="页面导航"></nav>
+  <div class="controls" aria-label="演示控制">
+    <button type="button" data-go="prev" title="上一页（↑）">↑</button>
+    <button type="button" data-go="next" title="下一页（↓）">↓</button>
+  </div>
+
+  <main>
+    <section class="slide" id="cover" data-index="01 / 08">
+      <div class="hero-mark" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="kicker">Robot Data Studio · Research Prototype</p>
+        <h1>Human × Robot<br><span class="accent">数据清洗</span>框架</h1>
+        <p class="lead">把“能读的数据”变成“有证据、可复查、知道哪里不能信”的训练候选数据。</p>
+        <div class="stats">
+          <div class="stat"><strong>3 + 3</strong><span>有界 train-only episodes</span></div>
+          <div class="stat"><strong>8</strong><span>Qwen Core 显式合同</span></div>
+          <div class="stat"><strong>7,716</strong><span>官方 V3 pilot 帧</span></div>
+          <div class="stat"><strong>0</strong><span>外部 VLM / 训练调用</span></div>
+        </div>
+        <div class="speaker-note">讲法：这不是“自动打一个总分”，而是一套把证据、缺测和处置分开的轻量框架。</div>
+      </div>
+    </section>
+
+    <section class="slide" id="why" data-index="02 / 08">
+      <div class="wrap">
+        <p class="kicker">01 · Why</p>
+        <h2>清洗的难点不是“找坏数据”，<br>而是<span class="accent">别把未知当正常</span>。</h2>
+        <div class="grid-3">
+          <article class="card problem-card" data-code="01">
+            <h3>时间容易算错</h3>
+            <p>LeRobot V3 的 episode 时间与共享视频文件时间不是一回事。区间猜测会让跨 episode 映射悄悄漂移。</p>
+          </article>
+          <article class="card problem-card" data-code="02">
+            <h3>局部坏 ≠ 整条坏</h3>
+            <p>短暂 tracking 丢失、action 卡住或某只手失效，应该 mask 窗口或保留有效片段，而不是删除整条 episode。</p>
+          </article>
+          <article class="card problem-card" data-code="03">
+            <h3>缺证据不能算通过</h3>
+            <p>没有标定绑定、EEF link、mask provider 或 train reference 时，结果必须是 N/A，并显式降低 coverage。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="framework" data-index="03 / 08">
+      <div class="wrap">
+        <p class="kicker">02 · Framework</p>
+        <h2>廉价规则先跑，昂贵语义<span class="teal">后置且默认关闭</span>。</h2>
+        <div class="pipeline">
+          <article class="tier"><b>T0</b><h3>安全门</h3><p>split、lineage、schema、维度、NaN、文件完整性。</p><small>fail closed</small></article>
+          <article class="tier"><b>T1</b><h3>时序 / 信号</h3><p>FPS jitter、截断、idle、重复、量化、撞限、时延与符号。</p><small>cheap first</small></article>
+          <article class="tier"><b>T2</b><h3>稀疏几何</h3><p>Human/Robot adapter、FK、投影接口与关键帧证据。</p><small>trusted only</small></article>
+          <article class="tier"><b>T3</b><h3>多模态一致性</h3><p>结构化 text-video-action-time；严格 budget 与 hash cache。</p><small>disabled/mock</small></article>
+          <article class="tier"><b>T4</b><h3>分布摘要</h3><p>去重、task/source/duration/motion coverage 与 sampler 建议。</p><small>streaming</small></article>
+        </div>
+        <div class="outcomes">
+          <div class="outcome"><strong>Hard reject</strong><span>整条不可进入候选集</span></div>
+          <div class="outcome"><strong>Review</strong><span>证据不足或需人工判断</span></div>
+          <div class="outcome"><strong>Window mask</strong><span>只屏蔽局部失败区间</span></div>
+          <div class="outcome"><strong>Soft weight</strong><span>保留但降低采样权重</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="pilot" data-index="04 / 08">
+      <div class="wrap">
+        <p class="kicker">03 · Bounded Pilot</p>
+        <h2>只接了两种真实来源，<br>每种只看<span class="accent">明确授权的 3 条 train</span>。</h2>
+        <div class="pilot-layout">
+          <article class="card dataset-card human">
+            <span class="pill review">HUMAN · XJGT HDF5</span>
+            <h3 style="margin-top:18px">1006561 / 1006564 / 1006570</h3>
+            <div class="episode-row"><span>帧数</span><strong>866 · 662 · 855</strong></div>
+            <div class="episode-row"><span>时长</span><strong>28.83 · 22.03 · 28.47s</strong></div>
+            <div class="episode-row"><span>视频绑定</span><strong>帧数全部匹配</strong></div>
+            <div class="episode-row"><span>Extension score</span><strong>0.869 · 0.831 · 0.833</strong></div>
+            <p class="tiny">逐 episode 打开 HDF5；MP4 只读 header、解码 0 帧。逐手 confidence 与所有 joint track 作为证据保留。</p>
+          </article>
+          <article class="card dataset-card robot">
+            <span class="pill review">ROBOT · LEROBOT V3</span>
+            <h3 style="margin-top:18px">episode 0 / 1 / 2</h3>
+            <div class="episode-row"><span>帧数</span><strong>417 · 3935 · 981</strong></div>
+            <div class="episode-row"><span>时长</span><strong>13.87 · 131.13 · 32.67s</strong></div>
+            <div class="episode-row"><span>核心 coverage</span><strong>1 / 8 = 0.125</strong></div>
+            <div class="episode-row"><span>处置</span><strong>3 × Review</strong></div>
+            <p class="tiny mono">episode_time = row.timestamp<br>file_time = from_timestamp + episode_time</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="qwen" data-index="05 / 08">
+      <div class="wrap">
+        <p class="kicker">04 · Qwen Core Contract</p>
+        <h2>旧基线没有被替换；<br>现在只是把<span class="teal">8 项状态讲清楚</span>。</h2>
+        <table class="metric-table">
+          <thead><tr><th>ID</th><th>指标</th><th>实现</th><th>本轮 Pilot</th></tr></thead>
+          <tbody>
+            <tr><td>S1</td><td>Sudden change</td><td>复用现有实现</td><td><span class="pill na">N/A · 缺 normalization</span></td></tr>
+            <tr><td>S2</td><td>State-action trend</td><td>显式 channel 映射</td><td><span class="pill">Robot 3/3 run</span></td></tr>
+            <tr><td>S3</td><td>Extreme value</td><td>复用现有实现</td><td><span class="pill na">N/A · 缺 reference bounds</span></td></tr>
+            <tr><td>S4</td><td>FK consistency</td><td>Qwen / Pinocchio adapter</td><td><span class="pill na">N/A · EEF 未确认</span></td></tr>
+            <tr><td>S5</td><td>Base / EEF orientation</td><td>复用现有实现</td><td><span class="pill na">N/A · mapping 缺失</span></td></tr>
+            <tr><td>C1</td><td>Instruction consistency</td><td>结构化 evidence 接口</td><td><span class="pill na">Disabled · 无外部 VLM</span></td></tr>
+            <tr><td>C2</td><td>Video-state consistency</td><td>Projection + mask + IoU</td><td><span class="pill na">N/A · binding / mask 缺失</span></td></tr>
+            <tr><td>C3</td><td>Video quality</td><td>复用现有实现</td><td><span class="pill na">N/A · 未解码视频</span></td></tr>
+          </tbody>
+        </table>
+        <div class="speaker-note">关键点：Robot 的 core score=1.0 只代表已运行的 S2；coverage=0.125 告诉你还有 7 项没有证据。</div>
+      </div>
+    </section>
+
+    <section class="slide" id="human" data-index="06 / 08">
+      <div class="wrap">
+        <p class="kicker">05 · Human Extension</p>
+        <h2>Human 清洗从“手有没有”推进到<br>“<span class="accent">哪只手、哪一段、可信到什么程度</span>”。</h2>
+        <div class="grid-2">
+          <article class="card">
+            <h3>三条 pilot 的代表性指标</h3>
+            <div class="metric-stack">
+              <div class="metric-line"><span>Tracking confidence</span><div class="meter"><i style="width:100%"></i></div><em>1.000</em></div>
+              <div class="metric-line"><span>SE(3) dynamics</span><div class="meter"><i style="width:97%"></i></div><em>≈0.971</em></div>
+              <div class="metric-line"><span>Calibration FOV</span><div class="meter"><i style="width:99%"></i></div><em>≈0.987</em></div>
+              <div class="metric-line"><span>Bone / topology</span><div class="meter"><i style="width:44%"></i></div><em>0.249–.552</em></div>
+            </div>
+            <p class="tiny" style="margin-top:22px">速度、加速度、jerk 都按连续 valid segment 计算；长失效不会被插值跨越。</p>
+          </article>
+          <article class="card">
+            <h3>投影证据分成两层</h3>
+            <ul>
+              <li><strong>已评估：</strong><span class="mono">inv(T_world_camera) @ T_world_joint</span> 在 1280×720 标定画布上的 FOV。</li>
+              <li><strong>仍 N/A：</strong>实际 MP4 是 720×1280；旋转/裁剪绑定没有证据，不能把 calibration projection 当作视频 overlay。</li>
+              <li><strong>仍 N/A：</strong><span class="mono">quality_hand</span> 的 0/1 语义未文档化，只保存两种 polarity hypothesis。</li>
+            </ul>
+            <div class="evidence-strip">
+              <div class="evidence"><strong>0.998</strong><span>episode 1006561 FOV</span></div>
+              <div class="evidence"><strong>0.968</strong><span>episode 1006564 FOV</span></div>
+              <div class="evidence"><strong>0.997</strong><span>episode 1006570 FOV</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="robot" data-index="07 / 08">
+      <div class="wrap">
+        <p class="kicker">06 · Robot Evidence & Guardrails</p>
+        <h2>能确定的就接线；<br>不能确定的<span class="accent">坚决不猜</span>。</h2>
+        <div class="grid-2">
+          <article class="card">
+            <h3>GR3 / QNexo</h3>
+            <div class="episode-row"><span>描述包</span><strong>fourier-robot-descriptions 0.2.7</strong></div>
+            <div class="episode-row"><span>name mapping</span><strong>31 / 33 exact</strong></div>
+            <div class="episode-row"><span>URDF</span><strong class="mono">SHA-256 固定</strong></div>
+            <div class="episode-row"><span>FK</span><strong>evaluated</strong></div>
+            <p class="tiny">冻结 left/right_end_effector_link 与 URDF hash；逐 row recorded action target 经 FK，训练 chunk 只用 t0 state，不读 future observation state、不做 lag shift。</p>
+          </article>
+          <article class="card">
+            <h3>OAK Camera</h3>
+            <div class="episode-row"><span>Sidecar ↔ PDF</span><strong>hash 匹配</strong></div>
+            <div class="episode-row"><span>Stored RGB</span><strong>832 × 480</strong></div>
+            <div class="episode-row"><span>Raw calibration</span><strong>1280 × 800</strong></div>
+            <div class="episode-row"><span>C2</span><strong>N/A</strong></div>
+            <p class="tiny">相机处理链与 Camera0 权威已接线；SAM3 真实 provider 未运行，所以 C2 仍诚实为 N/A，mock 只验证 cache 合同。</p>
+          </article>
+        </div>
+        <div class="guardrails" style="margin-top:18px">
+          <div class="guard"><b>✓</b><div><h3>保留旧基线</h3><p>现有 qwen_filters、filter_service、scorer、7 项 UI 和权重语义均未降级。</p></div></div>
+          <div class="guard"><b>×</b><div><h3>本轮明确没做</h3><p>没有训练、DLC、真实 VLM/SAM3、梯度归因或 val/test/eval 访问；仅对 3+3 pilot 编码官方 V3 必需视频。</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="close" data-index="08 / 08">
+      <div class="wrap">
+        <p class="kicker">07 · What We Have Now</p>
+        <h2>现在得到的不是一个“神奇分数”，<br>而是一个<span class="teal">可复查的决策面</span>。</h2>
+        <div class="next-list">
+          <div class="next-item"><div><h3>已能稳定运行</h3><p>Raw → prefilter → eligible → 官方 LeRobotDataset V3 → deep clean → online FINAL_V2 chunk → UI evidence。</p></div><span class="pill">DONE</span></div>
+          <div class="next-item"><div><h3>下一份最有价值的依赖</h3><p>本地 SAM3 权重或受控 API provider，才能把 Robot C2 从 N/A 提升为真实 mask/projection/IoU 证据。</p></div><span class="pill review">DEPENDENCY</span></div>
+          <div class="next-item"><div><h3>再往后才考虑</h3><p>全量 train-only 发布、训练期 normalization 与采样策略；仍不把 Motive/梯度归因放进预清洗。</p></div><span class="pill na">LATER</span></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><strong>75 + 21</strong><span>RDS / data_pipeline tests</span></div>
+          <div class="stat"><strong>0.6.0</strong><span>official LeRobot loader</span></div>
+          <div class="stat"><strong>2383 / 5333</strong><span>Human / Robot frames</span></div>
+          <div class="stat"><strong>0</strong><span>source media modified</span></div>
+        </div>
+        <div class="speaker-note">一句话收尾：先让每个判断都有证据，再决定哪些数据值得进入训练。</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const rail = document.querySelector('.rail');
+    slides.forEach((slide, index) => {
+      const dot = document.createElement('a');
+      dot.href = `#${slide.id}`;
+      dot.textContent = `${index + 1}`;
+      dot.setAttribute('aria-label', `跳到第 ${index + 1} 页`);
+      rail.appendChild(dot);
+    });
+    const dots = [...rail.querySelectorAll('a')];
+    let active = 0;
+    const update = () => {
+      const center = window.scrollY + window.innerHeight / 2;
+      active = slides.reduce((best, slide, index) => {
+        const distance = Math.abs(slide.offsetTop + slide.offsetHeight / 2 - center);
+        return distance < best.distance ? { index, distance } : best;
+      }, { index: 0, distance: Infinity }).index;
+      dots.forEach((dot, index) => dot.classList.toggle('active', index === active));
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      document.body.style.setProperty('--progress', `${max > 0 ? window.scrollY / max * 100 : 0}%`);
+    };
+    const go = (delta) => slides[Math.max(0, Math.min(slides.length - 1, active + delta))].scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('[data-go="prev"]').addEventListener('click', () => go(-1));
+    document.querySelector('[data-go="next"]').addEventListener('click', () => go(1));
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowDown', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); go(1); }
+      if (['ArrowUp', 'PageUp'].includes(event.key)) { event.preventDefault(); go(-1); }
+    });
+    update();
+  </script>
+</body>
+</html>

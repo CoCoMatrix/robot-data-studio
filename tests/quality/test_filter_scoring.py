@@ -168,6 +168,31 @@ class NamedGripperReader(SpikeReader):
         )
 
 
+def test_episode_scorer_adds_separate_qwen_scorecard_without_changing_legacy_score() -> None:
+    reader = SpikeReader()
+    filter_episode = DatasetFilterService(reader, FilterConfig()).summary().episodes[0]
+
+    result = EpisodeQualityScorer().score_episode(
+        reader,
+        episode_index=0,
+        duration_seconds=2.02,
+        nominal_duration=2.02,
+        config=CleaningConfig(),
+        filter_episode=filter_episode,
+    )
+
+    assert result.score == result.data_quality_score
+    assert result.qwen_core_score is not None
+    assert result.extension_score is None
+    assert result.coverage == pytest.approx(3 / 6)
+    assert result.final_decision == "review"
+    core = {metric.metric_id: metric for metric in result.metric_evidence if metric.group == "qwen_core"}
+    assert set(core) == {"S1", "S2", "S3", "S4", "S5", "C1", "C2", "C3"}
+    assert core["C1"].status == "not_evaluated"
+    assert core["C2"].status == "not_evaluated"
+    assert core["S4"].status == core["S5"].status == "retired"
+
+
 class SharedVideoReader(SpikeReader):
     def __init__(self, root: Path) -> None:
         super().__init__()

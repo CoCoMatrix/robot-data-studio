@@ -4,12 +4,15 @@ import math
 from collections.abc import Callable
 from statistics import median
 
+import numpy as np
+
 from robot_data_studio.formats.models import DatasetAdapter
 from robot_data_studio.lerobot.models import EpisodeFrame
 
 from .filter_models import EpisodeFilterSummary, FilterConfig, FilterSummary
 from .filter_service import DatasetFilterService, infer_gripper_indices
 from .models import CleaningConfig, EpisodeQualityResult, QualityFinding, VlmEvaluation, utc_now
+from .scorecard import build_qwen_scorecard
 from .vlm import VlmEvaluationError, VlmTaskSuccessEvaluator
 
 ProgressCallback = Callable[[int, int], None]
@@ -337,6 +340,33 @@ class EpisodeQualityScorer:
                 vlm_evaluation = self._vlm_evaluator.evaluate(reader, episode_index, config.vlm)
             except VlmEvaluationError as error:
                 vlm_error = str(error)
+        frames = reader.read_episode_frames(episode_index)
+        state_rows = [frame.observation_state for frame in frames]
+        action_rows = [frame.action for frame in frames]
+        states = (
+            np.asarray(state_rows, dtype=np.float64)
+            if state_rows and len({len(row) for row in state_rows}) == 1
+            else np.empty((0, 0), dtype=np.float64)
+        )
+        actions = (
+            np.asarray(action_rows, dtype=np.float64)
+            if action_rows and len({len(row) for row in action_rows}) == 1
+            else np.empty((0, 0), dtype=np.float64)
+        )
+        episode = reader.episode(episode_index)
+        scorecard = build_qwen_scorecard(
+            filter_episode,
+            states=states,
+            actions=actions,
+            raw_task_text=episode.tasks[0] if episode.tasks else "",
+            events={
+                "start": frames[0].frame_index if frames else 0,
+                "end": frames[-1].frame_index if frames else 0,
+            },
+            task_success_score=vlm_evaluation.score if vlm_evaluation else None,
+            enabled_quality_checks=set(config.enabled_quality_checks),
+            enabled_extension_checks=set(config.enabled_human_extension_checks),
+        )
         integrity_critical = bool(filter_episode.critical_findings)
         score = (
             0.0
@@ -369,5 +399,17 @@ class EpisodeQualityScorer:
                 *_filter_findings(filter_episode, config),
                 *_vlm_findings(vlm_evaluation, vlm_error),
             ],
+            qwen_core_score=scorecard.qwen_core_score,
+            extension_score=scorecard.extension_score,
+            coverage=scorecard.coverage,
+            qwen_core_coverage=scorecard.qwen_core_coverage,
+            extension_coverage=scorecard.extension_coverage,
+            quality_contract_version=scorecard.contract_version,
+            selected_checks=scorecard.selected_checks,
+            selected_denominator=scorecard.selected_denominator,
+            evaluated_count=scorecard.evaluated_count,
+            final_decision=scorecard.final_decision,
+            metric_evidence=scorecard.metrics,
+            disposition=scorecard.disposition,
             updated_at=utc_now(),
         )

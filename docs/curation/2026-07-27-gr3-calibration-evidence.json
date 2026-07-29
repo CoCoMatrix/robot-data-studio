@@ -1,0 +1,29 @@
+{
+  "fourier_robot_descriptions": {
+    "version": "0.2.7",
+    "install_scope": "isolated temporary venv",
+    "urdf_relative_path": "fourier_robot_descriptions/assets/urdf/gr3_fourier_hand_6dof.urdf",
+    "urdf_sha256": "2b87382bbbda834260526b00728e2160529a3cd693267417d3e56683c87dcc9a",
+    "state_mapping": {
+      "exact_urdf_joint_names": 31,
+      "state_dimensions": 33,
+      "unmapped_non_urdf_channels": ["base_height", "base_pitch"],
+      "note": "All GR3 body and QNexo 6D proximal state joints map by exact name. The two base channels are logged platform variables, not URDF joints."
+    },
+    "fk_status": "not_evaluated",
+    "fk_reason": "observation.state.pose frame and the exact logged left/right EEF link are not documented; multiple URDF hand-link candidates remain, so no link was guessed"
+  },
+  "oak_camera": {
+    "sidecar_path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/configs/data/robot_camera0_extrinsic_v1.json",
+    "sidecar_sha256": "903ca96fbdc64d4def6ce6e79daf85a96a65b14d63a7eac1595a77c45cc5cf54",
+    "source_pdf_sha256": "e0d078fe17bec983e37157993b9d2413feff98498519ab230920a2c9c7e4d1ca",
+    "source_pdf_hash_matches": true,
+    "source_pdf_supports": "mechanical base/head-pitch translations and +40 degree Y rotation",
+    "stored_video": [832, 480],
+    "raw_calibration": [1280, 800],
+    "stored_k_candidate_math": "raw 0.5 scale, 1.3 aspect resize to 832x520, then center crop y by 20 pixels",
+    "binding_status": "not_verified",
+    "c2_status": "not_evaluated",
+    "c2_reason": "actual resize/crop provenance and robot-mask provider/SAM3 weights are unavailable"
+  }
+}

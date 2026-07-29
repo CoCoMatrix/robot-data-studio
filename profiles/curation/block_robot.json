@@ -1,0 +1,137 @@
+{
+  "profile_version": "1",
+  "name": "block-robot-train",
+  "selection": {
+    "train_allowlist": ["/mnt/cpfs/block_dataset/task_*/batch_*"],
+    "deny_patterns": ["*val*", "*validation*", "*test*", "*eval*"]
+  },
+  "task": {"text": "build with blocks", "events": ["start", "end"]},
+  "modalities": [
+    {"name": "state", "required": true},
+    {"name": "action", "required": true},
+    {"name": "video", "required": true}
+  ],
+  "progress": {"mode": "event_or_motion", "target_points": 64},
+  "sources": [
+    {
+      "source_id": "block-robot",
+      "embodiment": "robot",
+      "adapter": "lerobot_v3",
+      "fps": 30.0,
+      "decoded_pts_tolerance_seconds": 0.05,
+      "latency_frames": 0,
+      "latency_tolerance_frames": 1,
+      "validity_field": "finite_state_action",
+      "resampling": "nearest",
+      "state_fields": [],
+      "state_key": "observation.state",
+      "action_key": "action",
+      "validity_fields": [],
+      "video_key": "observation.images.top",
+      "channels": [
+        {
+          "name": "left_shoulder_pitch_joint",
+          "state_index": 5,
+          "action_index": 5,
+          "allow_sign_flip": false
+        }
+      ],
+      "geometry": {
+        "kinematics": {
+          "backend": "qwen_urdf",
+          "urdf_package": "fourier-robot-descriptions",
+          "urdf_path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/reports/evidence/gr3_pypi_urdf_audit_v1_20260722T103146Z/sources/pypi_gr3_fourier_hand_6dof.urdf",
+          "urdf_relative_path": "fourier_robot_descriptions/assets/urdf/gr3_fourier_hand_6dof.urdf",
+          "urdf_sha256": "2b87382bbbda834260526b00728e2160529a3cd693267417d3e56683c87dcc9a",
+          "joint_names": [
+            "head_yaw_joint", "head_pitch_joint", "waist_yaw_joint", "waist_pitch_joint", "waist_roll_joint",
+            "left_shoulder_pitch_joint", "left_shoulder_roll_joint", "left_shoulder_yaw_joint", "left_elbow_pitch_joint", "left_wrist_yaw_joint", "left_wrist_roll_joint", "left_wrist_pitch_joint",
+            "right_shoulder_pitch_joint", "right_shoulder_roll_joint", "right_shoulder_yaw_joint", "right_elbow_pitch_joint", "right_wrist_yaw_joint", "right_wrist_roll_joint", "right_wrist_pitch_joint",
+            "L_pinky_proximal_joint", "L_ring_proximal_joint", "L_middle_proximal_joint", "L_index_proximal_joint", "L_thumb_proximal_pitch_joint", "L_thumb_proximal_yaw_joint",
+            "R_pinky_proximal_joint", "R_ring_proximal_joint", "R_middle_proximal_joint", "R_index_proximal_joint", "R_thumb_proximal_pitch_joint", "R_thumb_proximal_yaw_joint"
+          ],
+          "joint_state_indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+          "root_link": "base_link",
+          "end_effector_link": null,
+          "end_effector_links": {
+            "left": "left_end_effector_link",
+            "right": "right_end_effector_link"
+          },
+          "end_effector_link_candidates": [
+            "left_hand_roll_link", "L_hand_base_link", "L_hand_wrist_link",
+            "right_hand_roll_link", "R_hand_base_link", "R_hand_wrist_link"
+          ],
+          "logged_eef_key": "observation.state.pose",
+          "logged_eef_indices": [],
+          "action_target_policy": "anchor_state_plus_named_action",
+          "action_target_joint_names": [
+            "left_shoulder_pitch_joint", "left_shoulder_roll_joint", "left_shoulder_yaw_joint",
+            "left_elbow_pitch_joint", "left_wrist_yaw_joint", "left_wrist_pitch_joint", "left_wrist_roll_joint",
+            "right_shoulder_pitch_joint", "right_shoulder_roll_joint", "right_shoulder_yaw_joint",
+            "right_elbow_pitch_joint", "right_wrist_yaw_joint", "right_wrist_pitch_joint", "right_wrist_roll_joint"
+          ],
+          "authority_evidence": "AHA-WAM shared_wrist_hand64_robot_eef_authority_v1; frozen offline experiment EEF, not deployment TCP",
+          "authority_evidence_path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/reports/evidence/shared_wrist_eef_authority_v1_20260722T1930Z/shared_wrist_eef_authority_v1.json",
+          "authority_evidence_sha256": "5d81a951e7a9e32d993a6ed79628e3ab7f59ab86dee4a970b7c495057b90096b",
+          "position_tolerance": 0.05
+        },
+        "reprojection": {
+          "calibration_sidecar_path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/configs/data/robot_camera0_extrinsic_v1.json",
+          "calibration_sidecar_sha256": "903ca96fbdc64d4def6ce6e79daf85a96a65b14d63a7eac1595a77c45cc5cf54",
+          "authority_evidence_path": "/mnt/workspace/spy/AHA-WAM-human-robot-grasp/reports/evidence/final_robot_camera0_bgrade_gate_v1_20260724T005442Z/final_robot_camera0_bgrade_gate_v1.json",
+          "authority_evidence_sha256": "9a82055a3a26d64bfdeabe90c282fe22c0f9c1a37b05456a9387ac270cbcc638",
+          "camera_link": "head_pitch_link",
+          "optical_axis_convention": "mechanical x-forward/y-left/z-up to OpenCV optical",
+          "eef_image_binding": "observation.images.top serial 14442C10A151B5D600",
+          "calibration_image_size": [1280, 800],
+          "stored_image_size": [832, 480],
+          "stored_intrinsic": [[369.8107238769531, 0.0, 401.1994079589844], [0.0, 369.572607421875, 235.1977005004883], [0.0, 0.0, 1.0]],
+          "binding_verified": true,
+          "mask_provider": "sam3",
+          "sam3": {
+            "backend": "disabled",
+            "model_version": "sam3-unconfigured",
+            "prompt": "robot arms and hands",
+            "confidence_threshold": 0.5,
+            "api_key_env": "SAM3_API_KEY"
+          }
+        }
+      }
+    }
+  ],
+  "gates": {
+    "hard": ["split_not_train", "non_finite", "dimension_mismatch", "timestamp_non_monotonic", "time_mapping_invalid"],
+    "review": [
+      "episode_start_truncated",
+      "episode_end_truncated",
+      "timestamp_jitter",
+      "idle_ratio",
+      "action_long_repeat",
+      "action_quantization",
+      "action_saturation",
+      "state_action_latency_mismatch",
+      "state_action_sign_mismatch"
+    ]
+  },
+  "checks": {
+    "boundary_tolerance_seconds": 0.05,
+    "timestamp_jitter_ratio": 0.2,
+    "idle_motion_threshold": 0.0001,
+    "max_idle_ratio": 0.85,
+    "action_repeat_frames": 15,
+    "quantization_unique_ratio": 0.05,
+    "saturation_tolerance": 0.000001
+  },
+  "vlm": {
+    "backend": "disabled",
+    "max_calls": 0,
+    "max_prompt_tokens": 0,
+    "max_cost_usd": 0.0,
+    "estimated_cost_per_call_usd": 0.0
+  },
+  "sidecar_root": ".rds-artifacts/curation/block-robot",
+  "normalization": {
+    "source_weights": {"block-robot": 1.0},
+    "task_weights": {"build with blocks": 1.0}
+  }
+}

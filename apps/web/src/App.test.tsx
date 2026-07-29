@@ -95,6 +95,37 @@ test("starts with an empty dataset path and prompts for a local dataset", async 
   expect(screen.getByRole("button", { name: "Import dataset" })).toBeDisabled();
 });
 
+test("shows official V3 publication and validity mask status", async () => {
+  const user = userEvent.setup();
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => formatsResponse() })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...projectResponse(),
+          dataset: {
+            ...projectResponse().dataset,
+            format: "lerobot_v3",
+            version: "v3.0",
+            features: {
+              "observation.state.validity": {},
+              "action.validity": {},
+              "observation.eef_pose_absolute.validity": {},
+            },
+          },
+        }),
+      })
+      .mockResolvedValueOnce({ ok: true, json: async () => episodesResponse() }),
+  );
+  renderApp();
+  await importDatasetForTest(user);
+  expect(await screen.findByText(/Official LeRobot V3/)).toBeInTheDocument();
+  expect(screen.getByText(/3 validity masks/)).toBeInTheDocument();
+});
+
 test("defaults to English and switches fixed UI copy to Chinese while preserving technical terms", async () => {
   const user = userEvent.setup();
   vi.stubGlobal(
@@ -1044,6 +1075,180 @@ test("marks saved results from an older scorer as requiring a rerun", async () =
   ).toBeInTheDocument();
 });
 
+test("shows grouped Qwen Core extension coverage and safety evidence", async () => {
+  const user = userEvent.setup();
+  const summary: any = cleaningSummary();
+  summary.results[0] = {
+    ...summary.results[0],
+    qwen_core_score: 0.75,
+    extension_score: 0.9,
+    coverage: 0.5,
+    final_decision: "mask",
+    disposition: {
+      hard_reject: false,
+      review: true,
+      window_masks: [{ start_frame: 4, end_frame: 8, reason: "right hand invalid" }],
+      soft_weight: 0.8,
+      reasons: ["manual review"],
+    },
+    metric_evidence: [
+      {
+        metric_id: "S1",
+        label: "Sudden change",
+        group: "qwen_core",
+        status: "evaluated",
+        score: 0.75,
+        weight: 1.5,
+        reason: "preserved filter",
+        abnormal_intervals: [{ start_frame: 4, end_frame: 8, reason: "jump" }],
+        evidence: {},
+      },
+      {
+        metric_id: "C1",
+        label: "Instruction consistency",
+        group: "qwen_core",
+        status: "evaluated",
+        score: 0.7,
+        weight: 2,
+        reason: "real DashScope structured instruction/video evidence",
+        abnormal_intervals: [],
+        evidence: {
+          provider_mode: "real",
+          model: "qwen3.7-plus",
+          from_cache: false,
+          axes: {
+            success: {
+              state: "review",
+              score: 0.5,
+              confidence: 0.6,
+              evidence_frames: [8],
+              evidence_timestamps: [1.2],
+            },
+          },
+        },
+      },
+      {
+        metric_id: "C2",
+        label: "Video-state consistency",
+        group: "qwen_core",
+        status: "evaluated",
+        score: 0.02,
+        weight: 1,
+        reason: "real local SAM3 mask / absolute EEF support-projection IoU",
+        abnormal_intervals: [],
+        evidence: {
+          projection_available: true,
+          robot_mask_available: true,
+          provider_mode: "real_local",
+          checkpoint_loaded: true,
+          evaluated_frame_count: 3,
+          projection_scope: "support discs, not a full URDF mesh silhouette",
+          object_masks: [{}, {}, {}],
+        },
+      },
+      {
+        metric_id: "C3",
+        label: "Video quality",
+        group: "qwen_core",
+        status: "evaluated",
+        score: 1,
+        weight: 1.5,
+        reason: "existing deterministic visual-quality scorer on official-loader decoded frames",
+        abnormal_intervals: [],
+        evidence: {
+          provider_mode: "deterministic_real_frames",
+          sample_count: 16,
+          issue_count: 0,
+        },
+      },
+      {
+        metric_id: "H1_tracking_confidence",
+        label: "Tracking confidence / valid spans",
+        group: "human_extension",
+        status: "evaluated",
+        score: 0.9,
+        weight: 1,
+        reason: "per-hand spans",
+        abnormal_intervals: [],
+        evidence: { left_valid_ratio: 1, right_valid_ratio: 0.8 },
+      },
+      {
+        metric_id: "gate_schema",
+        label: "Schema gate",
+        group: "safety_gate",
+        status: "evaluated",
+        score: 1,
+        weight: 1,
+        reason: "schema is finite",
+        abnormal_intervals: [],
+        evidence: {},
+      },
+    ],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => formatsResponse() })
+      .mockResolvedValueOnce({ ok: true, json: async () => projectResponse() })
+      .mockResolvedValueOnce({ ok: true, json: async () => episodesResponse() })
+      .mockResolvedValueOnce(pipelineJsonResponse(summary)),
+  );
+  renderApp();
+
+  await importDatasetForTest(user);
+  await user.click(await screen.findByRole("button", { name: "Run cleaning Pipeline" }));
+
+  expect(await screen.findByText("Qwen Core")).toBeInTheDocument();
+  expect(screen.getByText("Human / Robot Extension")).toBeInTheDocument();
+  expect(screen.getByText("Safety Gates")).toBeInTheDocument();
+  expect(screen.getAllByText("50% coverage").length).toBeGreaterThan(0);
+  expect(screen.getByText("real local SAM3 mask / absolute EEF support-projection IoU")).toBeInTheDocument();
+  expect(screen.getByText("real · qwen3.7-plus · fresh")).toBeInTheDocument();
+  expect(screen.getByText("success · review · 60% confidence · frames 8")).toBeInTheDocument();
+  expect(screen.getByText("real_local · checkpoint loaded · 3 keyframes")).toBeInTheDocument();
+  expect(screen.getByText("support discs, not a full URDF mesh silhouette · 3 object masks")).toBeInTheDocument();
+  expect(screen.getByText("16 decoded frames · 0 issues")).toBeInTheDocument();
+  expect(screen.getByText("frames 4–8")).toBeInTheDocument();
+  expect(screen.getByText(/P 1 · R 1 · M 1 · X 1/)).toBeInTheDocument();
+});
+
+test("shows independent current-contract checkboxes and retired checks outside coverage", async () => {
+  const user = userEvent.setup();
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => formatsResponse() })
+    .mockResolvedValueOnce({ ok: true, json: async () => projectResponse() })
+    .mockResolvedValueOnce({ ok: true, json: async () => episodesResponse() })
+    .mockResolvedValueOnce(pipelineJsonResponse(cleaningSummary()));
+  vi.stubGlobal("fetch", fetch);
+  renderApp();
+
+  await importDatasetForTest(user);
+  const s1 = await screen.findByLabelText("S1 · Sudden change");
+  const c1 = screen.getByLabelText("C1 · Instruction consistency");
+  const interaction = screen.getByLabelText("H9 · Hand-object interaction");
+  expect(s1).toBeChecked();
+  expect(c1).toBeChecked();
+  expect(interaction).not.toBeChecked();
+  await user.click(s1);
+  expect(s1).not.toBeChecked();
+  expect(c1).toBeChecked();
+  expect(c1).not.toBeDisabled();
+  await user.click(interaction);
+  expect(interaction).toBeChecked();
+  expect(screen.getByText("S4 · FK consistency · retired / out of scope")).toBeInTheDocument();
+  expect(screen.getByText("S5 · Direction convention · retired / out of scope")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Run cleaning Pipeline" }));
+  const request = fetch.mock.calls.find(([url]) => String(url).includes("/pipeline/runs/stream"));
+  expect(request).toBeDefined();
+  const body = JSON.parse(String(request?.[1]?.body));
+  expect(body.enabled_quality_checks).not.toContain("S1");
+  expect(body.enabled_quality_checks).toContain("C1");
+  expect(body.enabled_human_extension_checks).toContain("H9_hand_object_interaction");
+});
+
 test("shows passed episodes in the status folder when default issue filters are selected", async () => {
   const user = userEvent.setup();
   const allPassedSummary = cleaningSummary();
@@ -1893,11 +2098,10 @@ test("sends VLM settings when running cleaning", async () => {
   await importDatasetForTest(user);
   await user.click(await screen.findByRole("button", { name: "Run cleaning Pipeline" }));
 
-  expect(fetch).toHaveBeenCalledWith(
-    "/api/projects/project-1/pipeline/runs/stream",
+  const request = fetch.mock.calls.find(([url]) => url === "/api/projects/project-1/pipeline/runs/stream");
+  expect(request?.[1]).toEqual(expect.objectContaining({ method: "POST" }));
+  expect(JSON.parse(String(request?.[1]?.body))).toEqual(
     expect.objectContaining({
-      method: "POST",
-      body: JSON.stringify({
         pass_threshold: 0.8,
         review_threshold: 0.6,
         enabled_filter_stages: [
@@ -1923,7 +2127,7 @@ test("sends VLM settings when running cleaning", async () => {
           prompt: "Return JSON. Task: {task}",
           sample_frames: 4,
         },
-      }),
+        enabled_quality_checks: ["S1", "S2", "S3", "C1", "C2", "C3"],
     }),
   );
 });
@@ -2041,11 +2245,10 @@ test("sends selected cleaning rules and slider weights when running cleaning", a
   fireEvent.change(filters.getByLabelText("Time sync weight"), { target: { value: "2.5" } });
   await user.click(await screen.findByRole("button", { name: "Run cleaning Pipeline" }));
 
-  expect(fetch).toHaveBeenCalledWith(
-    "/api/projects/project-1/pipeline/runs/stream",
+  const request = fetch.mock.calls.find(([url]) => url === "/api/projects/project-1/pipeline/runs/stream");
+  expect(request?.[1]).toEqual(expect.objectContaining({ method: "POST" }));
+  expect(JSON.parse(String(request?.[1]?.body))).toEqual(
     expect.objectContaining({
-      method: "POST",
-      body: JSON.stringify({
         pass_threshold: 0.8,
         review_threshold: 0.6,
         enabled_filter_stages: [
@@ -2062,7 +2265,7 @@ test("sends selected cleaning rules and slider weights when running cleaning", a
           extreme_value: 2,
           metadata_completeness: 1,
         },
-      }),
+        enabled_quality_checks: ["S1", "S2", "S3", "C1", "C2", "C3"],
     }),
   );
 });

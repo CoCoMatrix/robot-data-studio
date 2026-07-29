@@ -1,0 +1,1576 @@
+{
+  "$defs": {
+    "ChannelProfile": {
+      "properties": {
+        "action_index": {
+          "minimum": 0,
+          "title": "Action Index",
+          "type": "integer"
+        },
+        "action_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Max"
+        },
+        "action_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Min"
+        },
+        "allow_sign_flip": {
+          "default": false,
+          "title": "Allow Sign Flip",
+          "type": "boolean"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "state_index": {
+          "minimum": 0,
+          "title": "State Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "state_index",
+        "action_index"
+      ],
+      "title": "ChannelProfile",
+      "type": "object"
+    },
+    "CheckControl": {
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weight"
+        }
+      },
+      "title": "CheckControl",
+      "type": "object"
+    },
+    "FullSilhouetteC2Profile": {
+      "properties": {
+        "calibrated": {
+          "default": false,
+          "title": "Calibrated",
+          "type": "boolean"
+        },
+        "calibration_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calibration Version"
+        },
+        "contract_version": {
+          "const": "qwen-robotmanip-c2-full-silhouette-v2",
+          "default": "qwen-robotmanip-c2-full-silhouette-v2",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "hard_reject_allowed": {
+          "const": false,
+          "default": false,
+          "title": "Hard Reject Allowed",
+          "type": "boolean"
+        },
+        "iou_review_threshold": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Iou Review Threshold",
+          "type": "number"
+        },
+        "keyframes_per_episode": {
+          "default": 5,
+          "maximum": 8,
+          "minimum": 3,
+          "title": "Keyframes Per Episode",
+          "type": "integer"
+        },
+        "mask_checkpoint_kind": {
+          "default": "official_sam3",
+          "enum": [
+            "official_sam3",
+            "fine_tuned_sam3"
+          ],
+          "title": "Mask Checkpoint Kind",
+          "type": "string"
+        },
+        "projection_scope": {
+          "const": "full_urdf_visual_silhouette",
+          "default": "full_urdf_visual_silhouette",
+          "title": "Projection Scope",
+          "type": "string"
+        },
+        "temporal_offsets_frames": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Temporal Offsets Frames",
+          "type": "array"
+        },
+        "threshold_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold Version"
+        }
+      },
+      "title": "FullSilhouetteC2Profile",
+      "type": "object"
+    },
+    "GateProfile": {
+      "properties": {
+        "hard": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hard",
+          "type": "array"
+        },
+        "review": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Review",
+          "type": "array"
+        }
+      },
+      "title": "GateProfile",
+      "type": "object"
+    },
+    "GeometryProfile": {
+      "properties": {
+        "c2_full_silhouette": {
+          "$ref": "#/$defs/FullSilhouetteC2Profile"
+        },
+        "kinematics": {
+          "$ref": "#/$defs/KinematicsProfile"
+        },
+        "reprojection": {
+          "$ref": "#/$defs/ReprojectionProfile"
+        }
+      },
+      "title": "GeometryProfile",
+      "type": "object"
+    },
+    "HumanExtensionConfig": {
+      "properties": {
+        "bone_length_cv_review": {
+          "default": 0.1,
+          "exclusiveMinimum": 0,
+          "title": "Bone Length Cv Review",
+          "type": "number"
+        },
+        "calibration_image_size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calibration Image Size"
+        },
+        "confidence_threshold": {
+          "default": 0.5,
+          "title": "Confidence Threshold",
+          "type": "number"
+        },
+        "derivative_outlier_scale": {
+          "default": 8.0,
+          "exclusiveMinimum": 0,
+          "title": "Derivative Outlier Scale",
+          "type": "number"
+        },
+        "display_matrix": {
+          "anyOf": [
+            {
+              "maxItems": 9,
+              "minItems": 9,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Matrix"
+        },
+        "encoded_video_size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Encoded Video Size"
+        },
+        "short_hole_max_frames": {
+          "default": 2,
+          "minimum": 0,
+          "title": "Short Hole Max Frames",
+          "type": "integer"
+        },
+        "stored_video_size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stored Video Size"
+        },
+        "video_binding_verified": {
+          "default": false,
+          "title": "Video Binding Verified",
+          "type": "boolean"
+        }
+      },
+      "title": "HumanExtensionConfig",
+      "type": "object"
+    },
+    "KinematicsProfile": {
+      "properties": {
+        "action_target_joint_names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Action Target Joint Names",
+          "type": "array"
+        },
+        "action_target_policy": {
+          "anyOf": [
+            {
+              "const": "anchor_state_plus_named_action",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Target Policy"
+        },
+        "authority_evidence": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Evidence"
+        },
+        "authority_evidence_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Evidence Path"
+        },
+        "authority_evidence_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Evidence Sha256"
+        },
+        "backend": {
+          "default": "qwen_urdf",
+          "enum": [
+            "qwen_urdf",
+            "pinocchio"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "end_effector_link": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Effector Link"
+        },
+        "end_effector_link_candidates": {
+          "items": {
+            "type": "string"
+          },
+          "title": "End Effector Link Candidates",
+          "type": "array"
+        },
+        "end_effector_links": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "End Effector Links",
+          "type": "object"
+        },
+        "excluded_visual_joint_roots": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Visual Joint Roots",
+          "type": "array"
+        },
+        "explicit_unrecorded_joint_positions": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Explicit Unrecorded Joint Positions",
+          "type": "object"
+        },
+        "joint_names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Joint Names",
+          "type": "array"
+        },
+        "joint_state_indices": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Joint State Indices",
+          "type": "array"
+        },
+        "logged_eef_indices": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Logged Eef Indices",
+          "type": "array"
+        },
+        "logged_eef_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Logged Eef Key"
+        },
+        "position_tolerance": {
+          "default": 0.05,
+          "exclusiveMinimum": 0,
+          "title": "Position Tolerance",
+          "type": "number"
+        },
+        "root_link": {
+          "default": "base_link",
+          "title": "Root Link",
+          "type": "string"
+        },
+        "unrecorded_joint_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unrecorded Joint Authority"
+        },
+        "urdf_package": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Urdf Package"
+        },
+        "urdf_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Urdf Path"
+        },
+        "urdf_relative_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Urdf Relative Path"
+        },
+        "urdf_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Urdf Sha256"
+        },
+        "visual_scope": {
+          "default": "full_urdf",
+          "enum": [
+            "full_urdf",
+            "pose_authorized_upper_body"
+          ],
+          "title": "Visual Scope",
+          "type": "string"
+        },
+        "visual_scope_authority_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Visual Scope Authority Path"
+        },
+        "visual_scope_authority_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Visual Scope Authority Sha256"
+        }
+      },
+      "title": "KinematicsProfile",
+      "type": "object"
+    },
+    "ModalityProfile": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ModalityProfile",
+      "type": "object"
+    },
+    "NormalizationProfile": {
+      "properties": {
+        "source_weights": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Source Weights",
+          "type": "object"
+        },
+        "task_weights": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Task Weights",
+          "type": "object"
+        }
+      },
+      "title": "NormalizationProfile",
+      "type": "object"
+    },
+    "ProgressProfile": {
+      "properties": {
+        "mode": {
+          "default": "fixed_time",
+          "enum": [
+            "fixed_time",
+            "event_or_motion"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "target_points": {
+          "default": 64,
+          "maximum": 4096,
+          "minimum": 1,
+          "title": "Target Points",
+          "type": "integer"
+        }
+      },
+      "title": "ProgressProfile",
+      "type": "object"
+    },
+    "QualityContractProfile": {
+      "properties": {
+        "contract_version": {
+          "const": "qwen-cleaning-v2",
+          "default": "qwen-cleaning-v2",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "human_extensions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/CheckControl"
+          },
+          "title": "Human Extensions",
+          "type": "object"
+        },
+        "qwen": {
+          "additionalProperties": {
+            "$ref": "#/$defs/CheckControl"
+          },
+          "title": "Qwen",
+          "type": "object"
+        }
+      },
+      "required": [
+        "qwen",
+        "human_extensions"
+      ],
+      "title": "QualityContractProfile",
+      "type": "object"
+    },
+    "ReprojectionProfile": {
+      "properties": {
+        "authority_evidence_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Evidence Path"
+        },
+        "authority_evidence_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Evidence Sha256"
+        },
+        "binding_verified": {
+          "default": false,
+          "title": "Binding Verified",
+          "type": "boolean"
+        },
+        "calibration_image_size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calibration Image Size"
+        },
+        "calibration_sidecar_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calibration Sidecar Path"
+        },
+        "calibration_sidecar_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calibration Sidecar Sha256"
+        },
+        "camera_link": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Camera Link"
+        },
+        "display_transform": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Transform"
+        },
+        "distortion_coefficients": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Distortion Coefficients"
+        },
+        "distortion_model": {
+          "anyOf": [
+            {
+              "const": "opencv_14d",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Distortion Model"
+        },
+        "eef_image_binding": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Eef Image Binding"
+        },
+        "extrinsics_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extrinsics Path"
+        },
+        "intrinsics_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intrinsics Path"
+        },
+        "mask_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mask Provider"
+        },
+        "optical_axis_convention": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Optical Axis Convention"
+        },
+        "projection_lens_contract": {
+          "default": "frozen_sidecar_14d",
+          "enum": [
+            "frozen_sidecar_14d",
+            "train_only_stored_k_override_v2"
+          ],
+          "title": "Projection Lens Contract",
+          "type": "string"
+        },
+        "projection_override_evidence_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Projection Override Evidence Path"
+        },
+        "projection_override_evidence_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Projection Override Evidence Sha256"
+        },
+        "raw_intrinsic": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Intrinsic"
+        },
+        "sam3": {
+          "$ref": "#/$defs/Sam3Config"
+        },
+        "stored_image_size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stored Image Size"
+        },
+        "stored_intrinsic": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stored Intrinsic"
+        },
+        "stored_video_undistorted": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stored Video Undistorted"
+        }
+      },
+      "title": "ReprojectionProfile",
+      "type": "object"
+    },
+    "Sam3Config": {
+      "properties": {
+        "api_key_env": {
+          "default": "SAM3_API_KEY",
+          "title": "Api Key Env",
+          "type": "string"
+        },
+        "backend": {
+          "default": "disabled",
+          "enum": [
+            "disabled",
+            "mock",
+            "local",
+            "api"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "batch_size": {
+          "default": 4,
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Batch Size",
+          "type": "integer"
+        },
+        "confidence_threshold": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence Threshold",
+          "type": "number"
+        },
+        "device": {
+          "default": "cuda:0",
+          "title": "Device",
+          "type": "string"
+        },
+        "local_weights_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Local Weights Path"
+        },
+        "mock_box": {
+          "default": [
+            0.25,
+            0.25,
+            0.75,
+            0.75
+          ],
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Mock Box",
+          "type": "array"
+        },
+        "model_version": {
+          "default": "sam3-unconfigured",
+          "title": "Model Version",
+          "type": "string"
+        },
+        "prompt": {
+          "default": "robot arms and hands",
+          "title": "Prompt",
+          "type": "string"
+        }
+      },
+      "title": "Sam3Config",
+      "type": "object"
+    },
+    "SelectionProfile": {
+      "properties": {
+        "deny_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Deny Patterns",
+          "type": "array"
+        },
+        "real_episode_allowlist": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Real Episode Allowlist",
+          "type": "array"
+        },
+        "train_allowlist": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Train Allowlist",
+          "type": "array"
+        }
+      },
+      "required": [
+        "train_allowlist"
+      ],
+      "title": "SelectionProfile",
+      "type": "object"
+    },
+    "SignalCheckProfile": {
+      "properties": {
+        "action_repeat_frames": {
+          "default": 8,
+          "minimum": 2,
+          "title": "Action Repeat Frames",
+          "type": "integer"
+        },
+        "boundary_tolerance_seconds": {
+          "default": 0.1,
+          "minimum": 0,
+          "title": "Boundary Tolerance Seconds",
+          "type": "number"
+        },
+        "idle_motion_threshold": {
+          "default": 0.0001,
+          "minimum": 0,
+          "title": "Idle Motion Threshold",
+          "type": "number"
+        },
+        "max_idle_ratio": {
+          "default": 0.8,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Max Idle Ratio",
+          "type": "number"
+        },
+        "quantization_unique_ratio": {
+          "default": 0.1,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Quantization Unique Ratio",
+          "type": "number"
+        },
+        "saturation_tolerance": {
+          "default": 1e-06,
+          "minimum": 0,
+          "title": "Saturation Tolerance",
+          "type": "number"
+        },
+        "timestamp_jitter_ratio": {
+          "default": 0.25,
+          "minimum": 0,
+          "title": "Timestamp Jitter Ratio",
+          "type": "number"
+        }
+      },
+      "title": "SignalCheckProfile",
+      "type": "object"
+    },
+    "SourceProfile": {
+      "properties": {
+        "action_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "action",
+          "title": "Action Key"
+        },
+        "adapter": {
+          "default": "jsonl",
+          "enum": [
+            "jsonl",
+            "xjgt_hdf5",
+            "lerobot_v3"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "channels": {
+          "items": {
+            "$ref": "#/$defs/ChannelProfile"
+          },
+          "title": "Channels",
+          "type": "array"
+        },
+        "decoded_pts_tolerance_seconds": {
+          "default": 0.05,
+          "minimum": 0,
+          "title": "Decoded Pts Tolerance Seconds",
+          "type": "number"
+        },
+        "embodiment": {
+          "enum": [
+            "human",
+            "robot"
+          ],
+          "title": "Embodiment",
+          "type": "string"
+        },
+        "fps": {
+          "exclusiveMinimum": 0,
+          "title": "Fps",
+          "type": "number"
+        },
+        "geometry": {
+          "$ref": "#/$defs/GeometryProfile"
+        },
+        "human_extension": {
+          "$ref": "#/$defs/HumanExtensionConfig"
+        },
+        "latency_frames": {
+          "default": 0,
+          "title": "Latency Frames",
+          "type": "integer"
+        },
+        "latency_tolerance_frames": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Latency Tolerance Frames",
+          "type": "integer"
+        },
+        "resampling": {
+          "const": "nearest",
+          "default": "nearest",
+          "title": "Resampling",
+          "type": "string"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "state_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "State Fields",
+          "type": "array"
+        },
+        "state_key": {
+          "default": "observation.state",
+          "title": "State Key",
+          "type": "string"
+        },
+        "validity_field": {
+          "default": "valid",
+          "title": "Validity Field",
+          "type": "string"
+        },
+        "validity_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Validity Fields",
+          "type": "array"
+        },
+        "video_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Video Key"
+        }
+      },
+      "required": [
+        "source_id",
+        "embodiment",
+        "fps"
+      ],
+      "title": "SourceProfile",
+      "type": "object"
+    },
+    "TaskProfile": {
+      "properties": {
+        "events": {
+          "items": {
+            "enum": [
+              "start",
+              "contact",
+              "end"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Events",
+          "type": "array"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "events"
+      ],
+      "title": "TaskProfile",
+      "type": "object"
+    },
+    "VlmProfile": {
+      "properties": {
+        "backend": {
+          "default": "disabled",
+          "enum": [
+            "disabled",
+            "mock"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "estimated_cost_per_call_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Estimated Cost Per Call Usd",
+          "type": "number"
+        },
+        "max_calls": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Max Calls",
+          "type": "integer"
+        },
+        "max_cost_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Max Cost Usd",
+          "type": "number"
+        },
+        "max_prompt_tokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Max Prompt Tokens",
+          "type": "integer"
+        },
+        "model": {
+          "default": "mock-v1",
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt": {
+          "default": "Compare task, keyframes, action, and time evidence.",
+          "title": "Prompt",
+          "type": "string"
+        }
+      },
+      "title": "VlmProfile",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "checks": {
+      "$ref": "#/$defs/SignalCheckProfile"
+    },
+    "gates": {
+      "$ref": "#/$defs/GateProfile"
+    },
+    "modalities": {
+      "items": {
+        "$ref": "#/$defs/ModalityProfile"
+      },
+      "minItems": 1,
+      "title": "Modalities",
+      "type": "array"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "normalization": {
+      "$ref": "#/$defs/NormalizationProfile"
+    },
+    "profile_version": {
+      "default": "1",
+      "enum": [
+        "1",
+        "2"
+      ],
+      "title": "Profile Version",
+      "type": "string"
+    },
+    "progress": {
+      "$ref": "#/$defs/ProgressProfile"
+    },
+    "quality_contract": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/QualityContractProfile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "selection": {
+      "$ref": "#/$defs/SelectionProfile"
+    },
+    "sidecar_root": {
+      "default": ".rds-artifacts/curation",
+      "title": "Sidecar Root",
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/SourceProfile"
+      },
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "task": {
+      "$ref": "#/$defs/TaskProfile"
+    },
+    "vlm": {
+      "$ref": "#/$defs/VlmProfile"
+    }
+  },
+  "required": [
+    "name",
+    "selection",
+    "task",
+    "modalities",
+    "sources"
+  ],
+  "title": "CurationProfile",
+  "type": "object"
+}

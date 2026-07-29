@@ -62,6 +62,14 @@ Import dataset → Select checks and run scope → Run quality pipeline → Read
 
 Quality checks include visual quality, sudden changes, state/action alignment, extreme values, metadata completeness, kinematic consistency, orientation alignment, and optional VLM task-success scoring. After the pipeline finishes, review the report dashboard, quality distribution, findings, signal charts, and recommended actions.
 
+## Codex/CLI embodied-data curation
+
+The repository also contains a stricter train-data workflow for heterogeneous Human and Robot sources. It is driven by the `$curate-embodied-data` Codex skill and CLI rather than the legacy web filter list. It supports bounded train-only intake, absolute pose/validity preparation, independently selected `qwen-cleaning-v2` checks, source-specific VLM prompts, GR3 URDF/SAM3 review, eligible-manifest promotion, official Hugging Face LeRobot V3 publication, and official-loader round-trip audits.
+
+Official SAM3 evidence is review-only until a versioned manual-mask calibration exists. C2 emits ranked `review_queue.json` and employee-friendly `review_queue.csv` plus overlays/contact sheets; it never deletes source data or automatically excludes an episode.
+
+See [Embodied Data Curation](docs/curation/README.md) for the workflow and quick start. The reusable skill lives at [`.codex/skills/curate-embodied-data`](.codex/skills/curate-embodied-data/SKILL.md).
+
 ## Requirements
 
 - Python 3.11+

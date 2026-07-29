@@ -57,6 +57,29 @@ export type QualityFinding = {
   message: string;
 };
 
+export type MetricEvidence = {
+  metric_id: string;
+  label: string;
+  group: "qwen_core" | "human_extension" | "robot_extension" | "safety_gate";
+  status: "evaluated" | "not_evaluated" | "disabled" | "retired";
+  enabled?: boolean;
+  contract_state?: "active" | "retired";
+  fidelity?: "standard" | "provisional" | "calibrated" | "historical";
+  score: number | null;
+  weight: number;
+  reason: string;
+  abnormal_intervals: Array<{ start_frame: number; end_frame: number; reason: string }>;
+  evidence: Record<string, unknown>;
+};
+
+export type ScorecardDisposition = {
+  hard_reject: boolean;
+  review: boolean;
+  window_masks: Array<{ start_frame: number; end_frame: number; reason: string }>;
+  soft_weight: number;
+  reasons: string[];
+};
+
 export type EpisodeQualityResult = {
   episode_index: number;
   score: number | null;
@@ -67,6 +90,18 @@ export type EpisodeQualityResult = {
   per_attribute_scores: Record<string, number>;
   findings: QualityFinding[];
   review_note: string | null;
+  qwen_core_score?: number | null;
+  extension_score?: number | null;
+  coverage?: number | null;
+  qwen_core_coverage?: number | null;
+  extension_coverage?: number | null;
+  quality_contract_version?: string | null;
+  selected_checks?: string[];
+  selected_denominator?: number;
+  evaluated_count?: number;
+  final_decision?: "pass" | "review" | "mask" | "reject" | null;
+  metric_evidence?: MetricEvidence[];
+  disposition?: ScorecardDisposition;
   updated_at: string;
 };
 
@@ -275,6 +310,8 @@ export type FilterConfig = {
 export type CleaningRuleConfig = {
   enabled_filter_stages: FilterStageId[];
   quality_weights: Record<string, number>;
+  enabled_quality_checks: string[];
+  enabled_human_extension_checks: string[];
 };
 
 function normalizeFilesystemPath(path: string) {

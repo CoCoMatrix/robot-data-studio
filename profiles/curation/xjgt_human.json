@@ -1,0 +1,93 @@
+{
+  "profile_version": "1",
+  "name": "xjgt-human-train",
+  "selection": {
+    "train_allowlist": ["/mnt/cpfs/egodata/XJGT_20260624"],
+    "deny_patterns": ["*val*", "*validation*", "*test*", "*eval*"]
+  },
+  "task": {
+    "text": "perform the annotated hand-object task",
+    "events": ["start", "end"]
+  },
+  "modalities": [
+    {"name": "state", "required": true},
+    {"name": "action", "required": false},
+    {"name": "video", "required": true}
+  ],
+  "progress": {"mode": "event_or_motion", "target_points": 64},
+  "sources": [
+    {
+      "source_id": "xjgt-human",
+      "embodiment": "human",
+      "adapter": "xjgt_hdf5",
+      "fps": 30.0,
+      "decoded_pts_tolerance_seconds": 0.05,
+      "latency_frames": 0,
+      "latency_tolerance_frames": 0,
+      "validity_field": "confidence",
+      "resampling": "nearest",
+      "state_fields": ["transforms/leftHand", "transforms/rightHand"],
+      "state_key": "hand_world_translation",
+      "action_key": null,
+      "validity_fields": ["confidences/leftHand", "confidences/rightHand"],
+      "video_key": null,
+      "channels": [],
+      "human_extension": {
+        "confidence_threshold": 0.5,
+        "short_hole_max_frames": 2,
+        "bone_length_cv_review": 0.1,
+        "derivative_outlier_scale": 8.0,
+        "calibration_image_size": [1280, 720],
+        "encoded_video_size": [720, 1280],
+        "stored_video_size": [1280, 720],
+        "display_matrix": [0, -65536, 0, 65536, 0, 0, 0, 0, 1073741824],
+        "video_binding_verified": true
+      },
+      "geometry": {
+        "kinematics": {"backend": "qwen_urdf"},
+        "reprojection": {
+          "intrinsics_path": "hdf5://camera/intrinsic",
+          "extrinsics_path": "hdf5://transforms/camera=T_world_camera",
+          "optical_axis_convention": "pinhole +Z projection in calibration space",
+          "eef_image_binding": "frame-index-bound hand/body joints",
+          "calibration_image_size": [1280, 720],
+          "stored_image_size": [1280, 720],
+          "stored_intrinsic": [[1000.0, 0.0, 640.0], [0.0, 1000.0, 360.0], [0.0, 0.0, 1.0]],
+          "binding_verified": true,
+          "sam3": {
+            "backend": "disabled",
+            "model_version": "sam3-unconfigured",
+            "prompt": "hands",
+            "confidence_threshold": 0.5,
+            "api_key_env": "SAM3_API_KEY"
+          }
+        }
+      }
+    }
+  ],
+  "gates": {
+    "hard": ["split_not_train", "non_finite", "dimension_mismatch", "timestamp_non_monotonic"],
+    "review": ["episode_start_truncated", "episode_end_truncated", "timestamp_jitter", "idle_ratio"]
+  },
+  "checks": {
+    "boundary_tolerance_seconds": 0.05,
+    "timestamp_jitter_ratio": 0.1,
+    "idle_motion_threshold": 0.0001,
+    "max_idle_ratio": 0.9,
+    "action_repeat_frames": 8,
+    "quantization_unique_ratio": 0.1,
+    "saturation_tolerance": 0.000001
+  },
+  "vlm": {
+    "backend": "disabled",
+    "max_calls": 0,
+    "max_prompt_tokens": 0,
+    "max_cost_usd": 0.0,
+    "estimated_cost_per_call_usd": 0.0
+  },
+  "sidecar_root": ".rds-artifacts/curation/xjgt-human",
+  "normalization": {
+    "source_weights": {"xjgt-human": 1.0},
+    "task_weights": {}
+  }
+}
