@@ -1,0 +1,1394 @@
+{
+  "operator": "action_state",
+  "version": "1.0.0",
+  "dataset": "astribot-s1",
+  "episode_id": "家居/摆放餐具/episode_000022",
+  "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+  "source_rows": 3640,
+  "native_dt_s": 0.03333282470703125,
+  "source_keep_windows": [
+    {
+      "start_s": 0.0,
+      "end_s": 121.33333587646484,
+      "rows": [
+        0,
+        3640
+      ]
+    }
+  ],
+  "channels": {
+    "left_arm_0": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2312,
+        "strongest_signed_correlation": 0.8971053664400814,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.008429279577303944,
+        "active_action_step_p999": 0.013079956815835648,
+        "same_exact_fraction": 0.00043252595155709344,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.003771877142626129,
+        "next_mae": 0.0033690307252866643,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.8971053664400814,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 1.11 frames (0.037s), R2 0.46",
+        "lead_frames": 1.1106038555779232,
+        "lead_s": 0.037019563636931964,
+        "lead_r2": 0.4612039915385605,
+        "level_corr": 0.999656695129478,
+        "level_slope": 1.0034368788117671,
+        "offset": 0.0035634390045972473,
+        "error_mad": 0.0031546929498755018,
+        "active_rows": 623
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "left_arm_1": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 1759,
+        "strongest_signed_correlation": 0.809127666186711,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.005334291224701445,
+        "active_action_step_p999": 0.013136817963686211,
+        "same_exact_fraction": 0.0005685048322910744,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.0024911264996739205,
+        "next_mae": 0.0020052924691678427,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.809127666186711,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 1.35 frames (0.045s), R2 0.20",
+        "lead_frames": 1.3527426283012995,
+        "lead_s": 0.04509073290289595,
+        "lead_r2": 0.20414352499235988,
+        "level_corr": 0.9951748295024873,
+        "level_slope": 0.9891448812126359,
+        "offset": -0.0022716183594646664,
+        "error_mad": 0.0009742007258285862,
+        "active_rows": 476
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "left_arm_2": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2218,
+        "strongest_signed_correlation": 0.7810948798450027,
+        "strongest_signed_lag_s": 0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.004110670215943779,
+        "active_action_step_p999": 0.008242725293693128,
+        "same_exact_fraction": 0.0004508566275924256,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.0024384551438073085,
+        "next_mae": 0.002340499701573318,
+        "best_lag_s": 0.03333282470703125,
+        "delta_correlation": 0.7810948798450027,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 0.62 frames (0.021s), R2 0.17",
+        "lead_frames": 0.6219988459841844,
+        "lead_s": 0.02073297850116655,
+        "lead_r2": 0.17088356576628472,
+        "level_corr": 0.9992307916618033,
+        "level_slope": 0.9977588212579865,
+        "offset": 0.001800440023977892,
+        "error_mad": 0.0018868273378427336,
+        "active_rows": 614
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "left_arm_3": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2609,
+        "strongest_signed_correlation": 0.9297360699177406,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.006576332882779344,
+        "active_action_step_p999": 0.012343450567864525,
+        "same_exact_fraction": 0.0003832886163280951,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.002612693305167934,
+        "next_mae": 0.001786164627771689,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.9297360699177406,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 1.08 frames (0.036s), R2 0.52",
+        "lead_frames": 1.0790986237942881,
+        "lead_s": 0.035969405268533663,
+        "lead_r2": 0.5171187398073644,
+        "level_corr": 0.9989135371582397,
+        "level_slope": 1.005375887969041,
+        "offset": 0.0006706968896258503,
+        "error_mad": 0.0018133898492441736,
+        "active_rows": 859
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "left_arm_4": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2022,
+        "strongest_signed_correlation": 0.8567655939112087,
+        "strongest_signed_lag_s": 0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.005206959652413575,
+        "active_action_step_p999": 0.012185193187992008,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.00253912184151797,
+        "next_mae": 0.002529120469904648,
+        "best_lag_s": 0.03333282470703125,
+        "delta_correlation": 0.8567655939112087,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 0.75 frames (0.025s), R2 0.33",
+        "lead_frames": 0.7492416450590759,
+        "lead_s": 0.024974340417961902,
+        "lead_r2": 0.3329034020304553,
+        "level_corr": 0.9991541620422904,
+        "level_slope": 0.9962957498115586,
+        "offset": 0.0017176758834277954,
+        "error_mad": 0.0021550947061359377,
+        "active_rows": 476
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "left_arm_5": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2456,
+        "strongest_signed_correlation": 0.9602526137270164,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.004048330617104953,
+        "active_action_step_p999": 0.019199031629059612,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.0024429967426710096,
+        "same_mae": 0.0015927322638056927,
+        "next_mae": 0.001514995461811285,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.9602526137270164,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 0.38 frames (0.013s), R2 0.23",
+        "lead_frames": 0.3804111590171442,
+        "lead_s": 0.012680178480117058,
+        "lead_r2": 0.23163716525059797,
+        "level_corr": 0.9997948886483571,
+        "level_slope": 1.0007774823483284,
+        "offset": 0.0003516157442116202,
+        "error_mad": 0.0007251255925035602,
+        "active_rows": 834
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "left_arm_6": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2434,
+        "strongest_signed_correlation": 0.8488410090622529,
+        "strongest_signed_lag_s": 0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.004723034928119766,
+        "active_action_step_p999": 0.014646659758964784,
+        "same_exact_fraction": 0.0004108463434675431,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.0026708669238563244,
+        "next_mae": 0.0026404355149805075,
+        "best_lag_s": 0.03333282470703125,
+        "delta_correlation": 0.8488410090622529,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 0.62 (t 5.8), R2 0.05, corr 0.9942442647499747",
+        "lead_frames": 0.6214752781613083,
+        "lead_s": 0.020715526506704378,
+        "lead_r2": 0.046447330942627874,
+        "level_corr": 0.9942442647499747,
+        "level_slope": 1.0001017563440966,
+        "offset": -0.0030511555998037993,
+        "error_mad": 0.0013414898522792762,
+        "active_rows": 694
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "right_arm_0": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 3188,
+        "strongest_signed_correlation": 0.6332064027557143,
+        "strongest_signed_lag_s": 0.0666656494140625,
+        "signature": "undetermined",
+        "active_error_p95": 0.03802292680565397,
+        "active_action_step_p999": 0.055087588764625266,
+        "same_exact_fraction": 0.0006273525721455458,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.012902596354064452,
+        "next_mae": 0.011835777474356074,
+        "best_lag_s": 0.0666656494140625,
+        "delta_correlation": 0.6332064027557143,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 1.46 (t 7.3), R2 0.03, corr 0.9836480679483537",
+        "lead_frames": 1.4572439000468629,
+        "lead_s": 0.04857405547565265,
+        "lead_r2": 0.02747190556754453,
+        "level_corr": 0.9836480679483537,
+        "level_slope": 0.9642538108732294,
+        "offset": -0.004975737798960104,
+        "error_mad": 0.003989697482411764,
+        "active_rows": 1911
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "right_arm_1": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [
+        {
+          "code": "unresponsive_feedback",
+          "effect": "mask",
+          "start_s": 16.83333396911621,
+          "end_s": 18.03333282470703,
+          "rows": [
+            505,
+            541
+          ],
+          "evidence": {
+            "action_range": 0.07625628221607988,
+            "state_range": 0.0,
+            "median_error": 0.14465706529114747
+          }
+        }
+      ],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2973,
+        "strongest_signed_correlation": 0.3907578175525972,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.012620670949869559,
+        "active_action_step_p999": 0.02021284680221677,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.0006727211570803902,
+        "same_mae": 0.006985088959763988,
+        "next_mae": 0.005562160006582573,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.3907578175525972,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 0.26 frames (0.009s), R2 0.04",
+        "lead_frames": 0.2628171095186887,
+        "lead_s": 0.008760436641595084,
+        "lead_r2": 0.039383639887915156,
+        "level_corr": 0.9955752152811537,
+        "level_slope": 0.9895168384999178,
+        "offset": -0.0003549899791052825,
+        "error_mad": 0.002018167564546783,
+        "active_rows": 1745
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 16.83333396911621,
+          "rows": [
+            0,
+            505
+          ]
+        },
+        {
+          "start_s": 18.03333282470703,
+          "end_s": 121.33333587646484,
+          "rows": [
+            541,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [
+        {
+          "start_s": 16.83333396911621,
+          "end_s": 18.03333282470703,
+          "rows": [
+            505,
+            541
+          ]
+        }
+      ],
+      "command_rows": 3604
+    },
+    "right_arm_2": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 2951,
+        "strongest_signed_correlation": 0.28791347509154785,
+        "strongest_signed_lag_s": 0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.09909185935698095,
+        "active_action_step_p999": 0.027753148334840407,
+        "same_exact_fraction": 0.00033886818027787193,
+        "next_exact_fraction": 0.00033886818027787193,
+        "same_mae": 0.01617134926112365,
+        "next_mae": 0.015693768155246056,
+        "best_lag_s": 0.03333282470703125,
+        "delta_correlation": 0.28791347509154785,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 0.81 (t 5.4), R2 0.02, corr 0.9718240648407809",
+        "lead_frames": 0.8144860357169978,
+        "lead_s": 0.027149120254879484,
+        "lead_r2": 0.016606536016866236,
+        "level_corr": 0.9718240648407809,
+        "level_slope": 0.9761986561967836,
+        "offset": -0.007473814870776333,
+        "error_mad": 0.0022223991468995896,
+        "active_rows": 1704
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "right_arm_3": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [
+        {
+          "code": "unresponsive_feedback",
+          "effect": "mask",
+          "start_s": 16.0,
+          "end_s": 16.700000762939453,
+          "rows": [
+            480,
+            501
+          ],
+          "evidence": {
+            "action_range": 0.06653645333243374,
+            "state_range": 0.0,
+            "median_error": 0.38965608626759485
+          }
+        }
+      ],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 3196,
+        "strongest_signed_correlation": 0.20575388676455814,
+        "strongest_signed_lag_s": 0.3333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.03703180171577203,
+        "active_action_step_p999": 0.1149206784975893,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.00031289111389236547,
+        "same_mae": 0.029401566027861464,
+        "next_mae": 0.027689096554542415,
+        "best_lag_s": 0.3333282470703125,
+        "delta_correlation": 0.20575388676455814,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 1.53 (t 5.3), R2 0.01, corr 0.8634671222974529",
+        "lead_frames": 1.5265992401119461,
+        "lead_s": 0.05088586486853861,
+        "lead_r2": 0.013975316946960858,
+        "level_corr": 0.8634671222974529,
+        "level_slope": 0.8166230691867897,
+        "offset": 0.024292918825936347,
+        "error_mad": 0.003559821694464449,
+        "active_rows": 1949
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 16.0,
+          "rows": [
+            0,
+            480
+          ]
+        },
+        {
+          "start_s": 16.700000762939453,
+          "end_s": 121.33333587646484,
+          "rows": [
+            501,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [
+        {
+          "start_s": 16.0,
+          "end_s": 16.700000762939453,
+          "rows": [
+            480,
+            501
+          ]
+        }
+      ],
+      "command_rows": 3619
+    },
+    "right_arm_4": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [
+        {
+          "code": "unresponsive_feedback",
+          "effect": "mask",
+          "start_s": 17.16666603088379,
+          "end_s": 18.03333282470703,
+          "rows": [
+            515,
+            541
+          ],
+          "evidence": {
+            "action_range": 0.06148982838059103,
+            "state_range": 0.0,
+            "median_error": 0.10920914794393277
+          }
+        }
+      ],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 3094,
+        "strongest_signed_correlation": 0.5834111620661815,
+        "strongest_signed_lag_s": 0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.007571329376431426,
+        "active_action_step_p999": 0.02354242361576051,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.004758523609458627,
+        "next_mae": 0.004587750037784521,
+        "best_lag_s": 0.03333282470703125,
+        "delta_correlation": 0.5834111620661815,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 0.06 (t 2.2), R2 0.00, corr 0.9992670358027856",
+        "lead_frames": 0.06478323497585572,
+        "lead_s": 0.0021594082154046145,
+        "lead_r2": 0.002947322679034081,
+        "level_corr": 0.9992670358027856,
+        "level_slope": 1.0012992110319803,
+        "offset": 0.002450617449870331,
+        "error_mad": 0.0022965373573097525,
+        "active_rows": 1711
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 17.16666603088379,
+          "rows": [
+            0,
+            515
+          ]
+        },
+        {
+          "start_s": 18.03333282470703,
+          "end_s": 121.33333587646484,
+          "rows": [
+            541,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [
+        {
+          "start_s": 17.16666603088379,
+          "end_s": 18.03333282470703,
+          "rows": [
+            515,
+            541
+          ]
+        }
+      ],
+      "command_rows": 3614
+    },
+    "right_arm_5": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 3096,
+        "strongest_signed_correlation": 0.3728739570738456,
+        "strongest_signed_lag_s": -0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.03315423592600713,
+        "active_action_step_p999": 0.06561124480981825,
+        "same_exact_fraction": 0.00032299741602067185,
+        "next_exact_fraction": 0.0009689922480620155,
+        "same_mae": 0.015246322645156204,
+        "next_mae": 0.015450825143281475,
+        "best_lag_s": -0.03333282470703125,
+        "delta_correlation": 0.3728739570738456,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 3.04 frames (0.101s), R2 0.04",
+        "lead_frames": 3.0402379537028854,
+        "lead_s": 0.10133971877844167,
+        "lead_r2": 0.03787183540165595,
+        "level_corr": 0.9596621159732631,
+        "level_slope": 0.9708684312476471,
+        "offset": -0.014775708322214037,
+        "error_mad": 0.0007440482258315381,
+        "active_rows": 1797
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "right_arm_6": {
+      "role": "target",
+      "kind": "arm",
+      "unit": "rad",
+      "events": [
+        {
+          "code": "unresponsive_feedback",
+          "effect": "mask",
+          "start_s": 15.0,
+          "end_s": 16.700000762939453,
+          "rows": [
+            450,
+            501
+          ],
+          "evidence": {
+            "action_range": 0.12482535216344418,
+            "state_range": 0.0,
+            "median_error": 0.3849210509860237
+          }
+        },
+        {
+          "code": "unresponsive_feedback",
+          "effect": "mask",
+          "start_s": 16.83333396911621,
+          "end_s": 18.03333282470703,
+          "rows": [
+            505,
+            541
+          ],
+          "evidence": {
+            "action_range": 0.10812640087793401,
+            "state_range": 0.0,
+            "median_error": 0.1807442503148261
+          }
+        }
+      ],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 clean-v1 technical/contract.json",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 3254,
+        "strongest_signed_correlation": 0.2913090951593578,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.18683161342513252,
+        "active_action_step_p999": 0.044160893928028015,
+        "same_exact_fraction": 0.00030731407498463427,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.021093806500998114,
+        "next_mae": 0.021454186393892107,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.2913090951593578,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 0.45 (t 4.8), R2 0.01, corr 0.9809858658777942",
+        "lead_frames": 0.4467452794396729,
+        "lead_s": 0.014891282088256309,
+        "lead_r2": 0.011197522042272201,
+        "level_corr": 0.9809858658777942,
+        "level_slope": 0.9907779662094071,
+        "offset": 0.008869710880923263,
+        "error_mad": 0.0019130769752877738,
+        "active_rows": 2043
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 15.0,
+          "rows": [
+            0,
+            450
+          ]
+        },
+        {
+          "start_s": 16.700000762939453,
+          "end_s": 16.83333396911621,
+          "rows": [
+            501,
+            505
+          ]
+        },
+        {
+          "start_s": 18.03333282470703,
+          "end_s": 121.33333587646484,
+          "rows": [
+            541,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [
+        {
+          "start_s": 15.0,
+          "end_s": 16.700000762939453,
+          "rows": [
+            450,
+            501
+          ]
+        },
+        {
+          "start_s": 16.83333396911621,
+          "end_s": 18.03333282470703,
+          "rows": [
+            505,
+            541
+          ]
+        }
+      ],
+      "command_rows": 3553
+    },
+    "left_grip": {
+      "role": "target",
+      "kind": "aperture",
+      "unit": "fraction",
+      "events": [],
+      "thresholds": {
+        "move": 0.35,
+        "still": 0.015,
+        "error": 0.35,
+        "response_s": 0.5,
+        "stall_s": 0.8,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 cache v3 mappings/GRIPPER-ENDPOINTS.json; separate visual open/close review in cleaning audit",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "gross_out_of_calibration_fraction": {
+        "action": 0.0,
+        "state": 0.0
+      },
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 193,
+        "strongest_signed_correlation": 0.9451042314154455,
+        "strongest_signed_lag_s": 0.03333282470703125,
+        "signature": "undetermined",
+        "active_error_p95": 0.05574462868692077,
+        "active_action_step_p999": 0.2290808345382759,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.0,
+        "same_mae": 0.011033468070877982,
+        "next_mae": 0.017901446935473762,
+        "best_lag_s": 0.03333282470703125,
+        "delta_correlation": 0.9451042314154455,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "command",
+        "detail": "lead 0.51 frames (0.017s), R2 0.80",
+        "lead_frames": 0.5074167988499918,
+        "lead_s": 0.016913635209469712,
+        "lead_r2": 0.7970534736228869,
+        "level_corr": 0.9991355452653273,
+        "level_slope": 1.0529446668794622,
+        "offset": 0.003641575365442497,
+        "error_mad": 0.004657479273706411,
+        "active_rows": 135
+      },
+      "gripper_evidence": {
+        "aligned": 3,
+        "opposite": 0,
+        "feedback_traversals": 4,
+        "command_range": 1.0
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "right_grip": {
+      "role": "target",
+      "kind": "aperture",
+      "unit": "fraction",
+      "events": [
+        {
+          "code": "unresponsive_feedback",
+          "effect": "review",
+          "start_s": 10.033333778381348,
+          "end_s": 12.033333778381348,
+          "rows": [
+            301,
+            361
+          ],
+          "evidence": {
+            "action_range": 1.0,
+            "state_range": 0.0,
+            "median_error": 0.9984114674471859
+          }
+        }
+      ],
+      "thresholds": {
+        "move": 0.35,
+        "still": 0.015,
+        "error": 0.35,
+        "response_s": 0.5,
+        "stall_s": 0.8,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "S1 cache v3 mappings/GRIPPER-ENDPOINTS.json; separate visual open/close review in cleaning audit",
+      "route": "command",
+      "usable_proxy_windows": [],
+      "gross_out_of_calibration_fraction": {
+        "action": 0.0,
+        "state": 0.0
+      },
+      "invalid_source_windows": [],
+      "valid_rows": 3640,
+      "alignment": {
+        "active_transitions": 866,
+        "strongest_signed_correlation": 0.31377388632895087,
+        "strongest_signed_lag_s": 0.0,
+        "signature": "undetermined",
+        "active_error_p95": 0.07624819401691998,
+        "active_action_step_p999": 0.22093295768757237,
+        "same_exact_fraction": 0.0,
+        "next_exact_fraction": 0.0011547344110854503,
+        "same_mae": 0.0420375965396938,
+        "next_mae": 0.04155029560474154,
+        "best_lag_s": 0.0,
+        "delta_correlation": 0.31377388632895087,
+        "lag_at_search_limit": false
+      },
+      "semantic": {
+        "verdict": "undetermined",
+        "detail": "lead 2.69 (t 6.8), R2 0.10, corr 0.949101276196171",
+        "lead_frames": 2.6919056872420635,
+        "lead_s": 0.0897288204007002,
+        "lead_r2": 0.10196412998670457,
+        "level_corr": 0.949101276196171,
+        "level_slope": 1.0341862113833096,
+        "offset": -0.036846988879163586,
+        "error_mad": 0.0029089621504999608,
+        "active_rows": 410
+      },
+      "gripper_evidence": {
+        "aligned": 0,
+        "opposite": 0,
+        "feedback_traversals": 8,
+        "command_range": 1.0
+      },
+      "reason": "declared_target",
+      "command_keep_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_mask_windows": [],
+      "command_rows": 3640
+    },
+    "chassis_velocity_x": {
+      "role": "unsupported",
+      "kind": "linear_velocity",
+      "unit": "m/s",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "CHASSIS-AUDIT.json: odometry pose cannot supply a body velocity command",
+      "route": "review",
+      "usable_proxy_windows": [],
+      "reason": "noncomparable_quantity",
+      "command_keep_windows": [],
+      "command_mask_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_rows": 0
+    },
+    "chassis_velocity_y": {
+      "role": "unsupported",
+      "kind": "linear_velocity",
+      "unit": "m/s",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "CHASSIS-AUDIT.json: odometry pose cannot supply a body velocity command",
+      "route": "review",
+      "usable_proxy_windows": [],
+      "reason": "noncomparable_quantity",
+      "command_keep_windows": [],
+      "command_mask_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_rows": 0
+    },
+    "chassis_velocity_yaw": {
+      "role": "unsupported",
+      "kind": "angular_velocity",
+      "unit": "rad/s",
+      "events": [],
+      "thresholds": {
+        "move": 0.06,
+        "still": 0.002,
+        "error": 0.08,
+        "response_s": 0.4,
+        "stall_s": 0.65,
+        "jump": 0.3,
+        "state_jump": 0.1,
+        "error_growth": 0.2,
+        "catch_error": 0.15,
+        "catch_s": 0.13,
+        "edge_s": 5.0,
+        "pad_s": 0.2,
+        "probe_s": 0.45
+      },
+      "mapping_evidence": "CHASSIS-AUDIT.json: odometry pose cannot supply a body velocity command",
+      "route": "review",
+      "usable_proxy_windows": [],
+      "reason": "noncomparable_quantity",
+      "command_keep_windows": [],
+      "command_mask_windows": [
+        {
+          "start_s": 0.0,
+          "end_s": 121.33333587646484,
+          "rows": [
+            0,
+            3640
+          ]
+        }
+      ],
+      "command_rows": 0
+    }
+  },
+  "command_disposition": "keep_masked",
+  "command_rows": 58070,
+  "source": {
+    "path": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/摆放餐具/data/chunk-000/episode_000022.parquet",
+    "episode_index": null,
+    "single_episode": true
+  }
+}

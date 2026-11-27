@@ -1,0 +1,2939 @@
+{
+  "summary": {
+    "curated/normal": {
+      "passed": 4,
+      "total": 4
+    },
+    "curated/next_state": {
+      "passed": 1,
+      "total": 1
+    },
+    "curated/handover_step": {
+      "passed": 1,
+      "total": 1
+    },
+    "curated/unresponsive_feedback": {
+      "passed": 1,
+      "total": 1
+    },
+    "curated/normal_calibrated_gripper": {
+      "passed": 1,
+      "total": 1
+    },
+    "curated/persistent_hand_mismatch": {
+      "passed": 2,
+      "total": 2
+    },
+    "curated/unknown_command": {
+      "passed": 2,
+      "total": 2
+    },
+    "heldout_sharpadex/persistent_hand_mismatch": {
+      "passed": 24,
+      "total": 24
+    },
+    "heldout_sharpadex/handover_step": {
+      "passed": 24,
+      "total": 24
+    },
+    "heldout_sharpadex/retained_all": {
+      "passed": 24,
+      "total": 24
+    },
+    "heldout_astribot-s1/retained_targets": {
+      "passed": 24,
+      "total": 24
+    },
+    "heldout_lingyu/retained_targets": {
+      "passed": 23,
+      "total": 24
+    },
+    "heldout_roco_taskboard/retained_targets": {
+      "passed": 24,
+      "total": 24
+    }
+  },
+  "case_list_sha256": "dfc49b9bcb6d8f6d63b2f0b54f7cd8749fd7f9b1d68fa995e07586c40cc1e025",
+  "code_sha256": {
+    "action_state.py": "0ffec7678ca3c602e1d2290cf746ea40b7e8caf6f0890ac178ce8528e771db11",
+    "contract.py": "2f4ba67b1ff6f68f6b994858cd2cc38f7956d0a5ea0d946693c371a0ea4bbc84",
+    "probe.py": "fdfbab061c1fa0d00802f94b241d014067a1c8456fadfdf34bba593c958146dc",
+    "profiles.py": "4758ae74d646f108785280e1f8211bf8533e56d3b00b13cace51e1a46e6218dd",
+    "run_operator.py": "da0805b2d2cdb18bf2f8e263835c8ce8bbb23b3dcaf5917252b15cf1fc9c0055",
+    "validate_real.py": "e8074806859e2eec02e81e97478b0bef990add7876803686ac5649ff81586d07"
+  },
+  "cases": [
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/铺床/episode_000000",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/铺床/data/chunk-000/episode_000000.parquet",
+      "channel": "left_arm_3",
+      "expect": "normal",
+      "window": [
+        30.5,
+        32.500001
+      ],
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "clean_garment_with_lint_roller/season_POC22048_2026_05_26_10_22_39_train__episode_000177",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/clean_garment_with_lint_roller/season_POC22048_2026_05_26_10_22_39_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "channel": "right_arm_j4",
+      "expect": "normal",
+      "window": [
+        5.0,
+        7.400001095367432
+      ],
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22002_2026_09_09_13_50_50_train__episode_000014",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22002_2026_09_09_13_50_50_train/lerobotv2.1/data/chunk-000/episode_000014.parquet",
+      "channel": "right_hand_j11",
+      "expect": "normal",
+      "window": [
+        1.5,
+        4.6000009046325685
+      ],
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "sort_blocks_by_print/episode_000106",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/sort_blocks_by_print/data/chunk-000/episode_000106.parquet",
+      "channel": "left_grip",
+      "expect": "normal",
+      "window": [
+        2.4000000953674316,
+        10.000001
+      ],
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "fineart",
+      "key": "task_051/episode_00000",
+      "source": "/mnt/ccm-raw/public/FineART/data/chunk-000/file-000.parquet",
+      "channel": "joint_0",
+      "expect": "next_state",
+      "window": [
+        3.0,
+        3.2333343492279054
+      ],
+      "passed": true,
+      "details": {
+        "route": "state_proxy",
+        "reason": "next_state",
+        "alignment": {
+          "active_transitions": 1129,
+          "strongest_signed_correlation": 1.0,
+          "strongest_signed_lag_s": 0.03333282470703125,
+          "signature": "next_state",
+          "active_error_p95": 0.023201888799667354,
+          "active_action_step_p999": 0.043875256061553965,
+          "same_exact_fraction": 0.07705934455270151,
+          "next_exact_fraction": 1.0,
+          "same_mae": 0.00527385216490081,
+          "next_mae": 0.0,
+          "best_lag_s": 0.03333282470703125,
+          "delta_correlation": 1.0,
+          "lag_at_search_limit": false
+        }
+      },
+      "profile_sha256": "a72cd903deafed642e0df1a34cb2a4031995a47bad2ef6468d821020febf310c",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "transfer_salt_between_cups_with_spoon/season_POC22048_2026_06_01_11_26_04_train/episode_000020",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/transfer_salt_between_cups_with_spoon/season_POC22048_2026_06_01_11_26_04_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "channel": "right_arm_j1",
+      "expect": "handover_step",
+      "window": [
+        2.3,
+        2.9
+      ],
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.944445,
+        "detected_intersections": [
+          [
+            2.3333332538604736,
+            2.9
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/摆放餐具/episode_000022",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/摆放餐具/data/chunk-000/episode_000022.parquet",
+      "channel": "right_arm_6",
+      "expect": "unresponsive_feedback",
+      "window": [
+        16.899999618530273,
+        17.900000618530274
+      ],
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            16.899999618530273,
+            17.900000618530274
+          ]
+        ]
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_airplane_box/episode_000000",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_airplane_box/data/chunk-000/episode_000000.parquet",
+      "channel": "left_grip",
+      "expect": "normal_calibrated_gripper",
+      "window": [
+        1.0,
+        6.000001
+      ],
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "nest_cups/season_POC22054_2026_05_23_15_03_06_train__episode_000000",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/nest_cups/season_POC22054_2026_05_23_15_03_06_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "expect": "persistent_hand_mismatch",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "nest_cups/season_POC22054_2026_05_23_15_03_06_train__episode_000001",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/nest_cups/season_POC22054_2026_05_23_15_03_06_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "expect": "persistent_hand_mismatch",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "zhiyuan-g1",
+      "key": "A2D-01/b81cf533-d219-4c64-a0bd-4a8c2ec66b0b/episode_000046",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/智元G1/A2D-01/b81cf533-d219-4c64-a0bd-4a8c2ec66b0b/data/chunk-000/episode_000046.parquet",
+      "channel": "arm_0",
+      "expect": "unknown_command",
+      "passed": true,
+      "details": {
+        "route": "review",
+        "reason": "unverified_command",
+        "alignment": {
+          "active_transitions": 750,
+          "strongest_signed_correlation": 0.9596463293442827,
+          "strongest_signed_lag_s": 0.0666656494140625,
+          "signature": "undetermined",
+          "active_error_p95": 0.04544050991535185,
+          "active_action_step_p999": 0.018076740682125086,
+          "same_exact_fraction": 0.04133333333333333,
+          "next_exact_fraction": 0.0,
+          "same_mae": 0.014453298648198446,
+          "next_mae": 0.011484769741694132,
+          "best_lag_s": 0.0666656494140625,
+          "delta_correlation": 0.9596463293442827,
+          "lag_at_search_limit": false
+        }
+      },
+      "profile_sha256": "c465b1b8c0b3b67a321256392a9b66c707c404ea2555766857bfd4efbaf788c2",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "zhiyuan-g1",
+      "key": "A2D-02/528961a6-c5ea-43f9-a9c9-7d8557d227cd/episode_000008",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/智元G1/A2D-02/528961a6-c5ea-43f9-a9c9-7d8557d227cd/data/chunk-000/episode_000008.parquet",
+      "channel": "arm_0",
+      "expect": "unknown_command",
+      "passed": true,
+      "details": {
+        "route": "review",
+        "reason": "unverified_command",
+        "alignment": {
+          "active_transitions": 0,
+          "strongest_signed_correlation": null,
+          "strongest_signed_lag_s": null,
+          "signature": "undetermined",
+          "active_error_p95": null,
+          "active_action_step_p999": null,
+          "same_exact_fraction": null,
+          "next_exact_fraction": null,
+          "same_mae": null,
+          "next_mae": null,
+          "best_lag_s": null,
+          "delta_correlation": null,
+          "lag_at_search_limit": false
+        }
+      },
+      "profile_sha256": "c465b1b8c0b3b67a321256392a9b66c707c404ea2555766857bfd4efbaf788c2",
+      "cohort": "curated"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train__episode_000069",
+      "window": [
+        0.0,
+        16.53333282470703
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_13_38_59_train__episode_000033",
+      "window": [
+        0.0,
+        6.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_13_38_59_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "rotate_bottle_cap/season_POC22007_2026_03_29_16_13_53_train__episode_000009",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/rotate_bottle_cap/season_POC22007_2026_03_29_16_13_53_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train__episode_000006",
+      "window": [
+        0.0,
+        9.033333778381348
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22065_2026_06_10_19_27_18_train__episode_000007",
+      "window": [
+        0.0,
+        4.5333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22065_2026_06_10_19_27_18_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "rotate_bottle_cap/season_POC22007_2026_03_27_15_15_29_train__episode_000035",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/rotate_bottle_cap/season_POC22007_2026_03_27_15_15_29_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "rotate_bottle_cap/season_POC22007_2026_03_27_19_12_46_train__episode_000033",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/rotate_bottle_cap/season_POC22007_2026_03_27_19_12_46_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "rotate_bottle_cap/season_POC22007_2026_03_27_20_26_22_train__episode_000019",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/rotate_bottle_cap/season_POC22007_2026_03_27_20_26_22_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "rotate_bottle_cap/season_POC22007_2026_03_28_14_14_23_train__episode_000023",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/rotate_bottle_cap/season_POC22007_2026_03_28_14_14_23_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "empty_dustpan_into_bin/season_POC22054_2026_05_29_19_18_10_train__episode_000020",
+      "window": [
+        0.0,
+        9.033333778381348
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/empty_dustpan_into_bin/season_POC22054_2026_05_29_19_18_10_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "right"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "tighten_bottle_cap/season_POC22007_2026_03_30_16_19_00_train__episode_000026",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/tighten_bottle_cap/season_POC22007_2026_03_30_16_19_00_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "tighten_bottle_cap/season_POC22007_2026_03_30_13_47_45_train__episode_000006",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/tighten_bottle_cap/season_POC22007_2026_03_30_13_47_45_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "fit_trash_bag_into_bin/season_POC22027_2026_06_07_14_30_32_train__episode_000008",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/fit_trash_bag_into_bin/season_POC22027_2026_06_07_14_30_32_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22065_2026_06_10_16_34_45_train__episode_000000",
+      "window": [
+        0.0,
+        45.03333282470703
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22065_2026_06_10_16_34_45_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train__episode_000080",
+      "window": [
+        0.0,
+        9.033333778381348
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_13_38_59_train__episode_000010",
+      "window": [
+        0.0,
+        4.5333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_13_38_59_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train__episode_000021",
+      "window": [
+        0.0,
+        21.03333282470703
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train__episode_000062",
+      "window": [
+        0.0,
+        9.033333778381348
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train__episode_000011",
+      "window": [
+        0.0,
+        6.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train__episode_000010",
+      "window": [
+        0.0,
+        9.033333778381348
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_10_50_09_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_10_13_38_59_train__episode_000003",
+      "window": [
+        0.0,
+        13.533333778381348
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_10_13_38_59_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train__episode_000052",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train__episode_000044",
+      "window": [
+        0.0,
+        6.0333333015441895
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train__episode_000018",
+      "window": [
+        0.0,
+        36.03333282470703
+      ],
+      "expect": "persistent_hand_mismatch",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/pack_object_in_storage_bag/season_POC22050_2026_06_08_13_50_51_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_hands": [
+          "left"
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "insert_batteries_into_device/season_POC22027_2026_06_09_17_03_24_train__episode_000002",
+      "window": [
+        1.4000000000000001,
+        2.1333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/insert_batteries_into_device/season_POC22027_2026_06_09_17_03_24_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.954546,
+        "detected_intersections": [
+          [
+            1.4333332777023315,
+            2.1333333333333333
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_coffee_filter_in_dripper/season_POC22032_2026_05_08_16_53_35_train__episode_000017",
+      "window": [
+        0.9666666666666668,
+        1.7333333333333334
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_coffee_filter_in_dripper/season_POC22032_2026_05_08_16_53_35_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.9666666666666668,
+            1.7333333333333334
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "iron_garment/season_POC22027_2026_06_20_11_28_46_train__episode_000022",
+      "window": [
+        1.3,
+        1.9
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/iron_garment/season_POC22027_2026_06_20_11_28_46_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.944444,
+        "detected_intersections": [
+          [
+            1.3333333730697632,
+            1.899999976158142
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "stack_napkins_in_holder/season_POC22032_2026_05_03_15_03_53_train__episode_000020",
+      "window": [
+        0.6000000000000001,
+        1.3333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/stack_napkins_in_holder/season_POC22032_2026_05_03_15_03_53_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.6000000238418579,
+            1.3333333333333333
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "sweep_waste_into_dustpan/season_POC22018_2026_05_24_14_22_33_train__episode_000098",
+      "window": [
+        1.4000000000000001,
+        2.566666666666667
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/sweep_waste_into_dustpan/season_POC22018_2026_05_24_14_22_33_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.971429,
+        "detected_intersections": [
+          [
+            1.4333332777023315,
+            2.566666603088379
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_fruits_in_basket/season_POC22007_2026_03_15_10_58_51_train__episode_000026",
+      "window": [
+        0.7,
+        1.6
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_fruits_in_basket/season_POC22007_2026_03_15_10_58_51_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.7,
+            1.6
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "empty_dustpan_into_bin/season_POC22054_2026_05_30_16_58_55_train__episode_000034",
+      "window": [
+        1.1333333333333333,
+        1.6333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/empty_dustpan_into_bin/season_POC22054_2026_05_30_16_58_55_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.933333,
+        "detected_intersections": [
+          [
+            1.1666666269302368,
+            1.6333333253860474
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "scrub_cup_interior/season_POC22027_2026_05_04_11_13_15_train__episode_000166",
+      "window": [
+        1.3,
+        1.9333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/scrub_cup_interior/season_POC22027_2026_05_04_11_13_15_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.947368,
+        "detected_intersections": [
+          [
+            1.3333333730697632,
+            1.9333332777023315
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "collect_waste_into_bin/season_POC22027_2026_06_08_17_17_22_train__episode_000123",
+      "window": [
+        1.3,
+        1.6666666666666667
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/collect_waste_into_bin/season_POC22027_2026_06_08_17_17_22_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.909091,
+        "detected_intersections": [
+          [
+            1.3333333730697632,
+            1.6666666269302368
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_21_10_22_47_train__episode_000224",
+      "window": [
+        1.1,
+        2.1
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_21_10_22_47_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            1.100000023841858,
+            2.0999999046325684
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "fit_trash_bag_into_bin/season_POC22027_2026_06_04_19_12_30_train__episode_000000",
+      "window": [
+        0.9333333333333333,
+        1.4333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/fit_trash_bag_into_bin/season_POC22027_2026_06_04_19_12_30_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.9333333373069763,
+            1.4333332777023315
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "reposition_and_stack_blocks/season_POC22027_2026_05_05_11_32_30_train__episode_000030",
+      "window": [
+        1.4333333333333333,
+        1.8333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/reposition_and_stack_blocks/season_POC22027_2026_05_05_11_32_30_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.916667,
+        "detected_intersections": [
+          [
+            1.4666666984558105,
+            1.8333333333333333
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_fruits_in_basket/season_POC22007_2026_03_15_19_44_24_train__episode_000000",
+      "window": [
+        1.0333333333333334,
+        1.5
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_fruits_in_basket/season_POC22007_2026_03_15_19_44_24_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.928571,
+        "detected_intersections": [
+          [
+            1.0666667222976685,
+            1.5
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_fruits_in_basket/season_POC22007_2026_03_15_14_10_47_train__episode_000040",
+      "window": [
+        0.9000000000000001,
+        1.7333333333333334
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_fruits_in_basket/season_POC22007_2026_03_15_14_10_47_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.96,
+        "detected_intersections": [
+          [
+            0.9333333373069763,
+            1.7333333333333334
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "fit_trash_bag_into_bin/season_POC22027_2026_06_06_15_57_58_train__episode_000004",
+      "window": [
+        1.0,
+        2.2333333333333334
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/fit_trash_bag_into_bin/season_POC22027_2026_06_06_15_57_58_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.972973,
+        "detected_intersections": [
+          [
+            1.0333333015441895,
+            2.2333333333333334
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "fit_trash_bag_into_bin/season_POC22027_2026_06_05_10_59_22_train__episode_000004",
+      "window": [
+        0.8333333333333335,
+        1.2333333333333334
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/fit_trash_bag_into_bin/season_POC22027_2026_06_05_10_59_22_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.8333333333333335,
+            1.2333333333333334
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "sweep_waste_into_dustpan/season_POC22054_2026_05_30_11_16_03_train__episode_000029",
+      "window": [
+        0.9333333333333333,
+        1.5333333333333334
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/sweep_waste_into_dustpan/season_POC22054_2026_05_30_11_16_03_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.9333333373069763,
+            1.5333333015441895
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "reposition_and_stack_blocks/season_POC22027_2026_05_07_14_01_01_train__episode_000020",
+      "window": [
+        1.1666666666666667,
+        1.9333333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/reposition_and_stack_blocks/season_POC22027_2026_05_07_14_01_01_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.956522,
+        "detected_intersections": [
+          [
+            1.2000000476837158,
+            1.9333332777023315
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "secure_coiled_cable_with_velcro_tie/season_POC22061_2026_06_22_11_10_54_train__episode_000006",
+      "window": [
+        1.0,
+        1.8
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/secure_coiled_cable_with_velcro_tie/season_POC22061_2026_06_22_11_10_54_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.958333,
+        "detected_intersections": [
+          [
+            1.0333333015441895,
+            1.7999999523162842
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "empty_dustpan_into_bin/season_POC22054_2026_05_29_19_18_10_train__episode_000038",
+      "window": [
+        1.4333333333333333,
+        2.7666666666666666
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/empty_dustpan_into_bin/season_POC22054_2026_05_29_19_18_10_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.975,
+        "detected_intersections": [
+          [
+            1.4666666984558105,
+            2.7666666507720947
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "empty_dustpan_into_bin/season_POC22054_2026_05_31_13_41_47_train__episode_000038",
+      "window": [
+        0.8666666666666667,
+        2.033333333333333
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/empty_dustpan_into_bin/season_POC22054_2026_05_31_13_41_47_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.971429,
+        "detected_intersections": [
+          [
+            0.8999999761581421,
+            2.0333333015441895
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "grind_medicine_with_mortar_and_pestle/season_POC22027_2026_05_25_10_59_06_train__episode_000016",
+      "window": [
+        1.8,
+        2.1666666666666665
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/grind_medicine_with_mortar_and_pestle/season_POC22027_2026_05_25_10_59_06_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 0.909091,
+        "detected_intersections": [
+          [
+            1.8333333730697632,
+            2.1666666666666665
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "fit_trash_bag_into_bin/season_POC22027_2026_06_05_16_01_01_train__episode_000008",
+      "window": [
+        0.9333333333333333,
+        1.3666666666666667
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/fit_trash_bag_into_bin/season_POC22027_2026_06_05_16_01_01_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.9333333373069763,
+            1.3666666666666667
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_coffee_filter_in_dripper/season_POC22032_2026_05_07_10_15_34_train__episode_000035",
+      "window": [
+        0.9666666666666668,
+        1.8666666666666667
+      ],
+      "expect": "handover_step",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_coffee_filter_in_dripper/season_POC22032_2026_05_07_10_15_34_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "reference_time_recall": 1.0,
+        "detected_intersections": [
+          [
+            0.9666666666666668,
+            1.8666666666666667
+          ]
+        ]
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000219",
+      "window": [
+        0.0,
+        6.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "insert_batteries_into_charger/season_POC22032_2026_05_05_19_34_58_train__episode_000012",
+      "window": [
+        1.5333333333333334,
+        16.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/insert_batteries_into_charger/season_POC22032_2026_05_05_19_34_58_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000165",
+      "window": [
+        0.0,
+        12.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-004.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_coffee_filter_in_dripper/season_POC22032_2026_05_06_13_36_14_train__episode_000077",
+      "window": [
+        0.0,
+        9.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_coffee_filter_in_dripper/season_POC22032_2026_05_06_13_36_14_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000048",
+      "window": [
+        0.0,
+        7.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000032",
+      "window": [
+        0.0,
+        7.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000111",
+      "window": [
+        0.0,
+        8.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000001",
+      "window": [
+        0.0,
+        12.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000437",
+      "window": [
+        0.0,
+        7.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-004.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "insert_batteries_into_charger/season_POC22032_2026_05_05_19_34_58_train__episode_000025",
+      "window": [
+        3.033333333333333,
+        27.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/insert_batteries_into_charger/season_POC22032_2026_05_05_19_34_58_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000327",
+      "window": [
+        0.0,
+        7.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000483",
+      "window": [
+        0.0,
+        3.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-004.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000043",
+      "window": [
+        0.0,
+        3.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000275",
+      "window": [
+        0.0,
+        5.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000155",
+      "window": [
+        0.0,
+        5.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-004.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000110",
+      "window": [
+        0.0,
+        12.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000382",
+      "window": [
+        0.0,
+        7.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000190",
+      "window": [
+        0.0,
+        9.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-004.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_coffee_filter_in_dripper/season_POC22032_2026_05_06_13_36_14_train__episode_000031",
+      "window": [
+        1.9,
+        21.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_coffee_filter_in_dripper/season_POC22032_2026_05_06_13_36_14_train/lerobot_v3.0/data/chunk-000/file-001.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train__episode_000135",
+      "window": [
+        0.0,
+        9.533333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/deal_playing_cards/season_POC22002_2026_07_03_10_25_36_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000214",
+      "window": [
+        0.0,
+        6.5
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000077",
+      "window": [
+        0.0,
+        6.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "place_coffee_filter_in_dripper/season_POC22032_2026_05_06_13_36_14_train__episode_000087",
+      "window": [
+        0.0,
+        13.033333333333333
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/place_coffee_filter_in_dripper/season_POC22032_2026_05_06_13_36_14_train/lerobot_v3.0/data/chunk-000/file-003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "sharpadex",
+      "key": "hammer_nails/season_POC22048_2026_05_22_10_21_37_train__episode_000229",
+      "window": [
+        2.1666666666666665,
+        6.0
+      ],
+      "expect": "retained_all",
+      "source": "/mnt/ccm-raw/public/SharpaDex-v1.0/hammer_nails/season_POC22048_2026_05_22_10_21_37_train/lerobot_v3.0/data/chunk-000/file-002.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "784445b5b4aa0cf8e6ec987228ca24d7062f11b01218c9743bc2f8eaf096fe8d",
+      "cohort": "heldout_sharpadex"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/办公收纳/episode_000376",
+      "window": [
+        0.0,
+        13.5
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/办公收纳/data/chunk-000/episode_000376.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/衣服装袋/episode_000074",
+      "window": [
+        0.0,
+        11.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/衣服装袋/data/chunk-000/episode_000074.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/挂抹布/episode_000122",
+      "window": [
+        0.0,
+        15.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/挂抹布/data/chunk-000/episode_000122.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/铺床/episode_000027",
+      "window": [
+        0.0,
+        39.03333282470703
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/铺床/data/chunk-000/episode_000027.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/插充电器/episode_000887",
+      "window": [
+        0.0,
+        7.5333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/插充电器/data/chunk-000/episode_000887.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/插充电器/episode_000389",
+      "window": [
+        0.0,
+        7.5333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/插充电器/data/chunk-000/episode_000389.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/扫台面/episode_000041",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/扫台面/data/chunk-000/episode_000041.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/整理抹布/episode_000070",
+      "window": [
+        0.0,
+        70.03333282470703
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/整理抹布/data/chunk-000/episode_000070.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/插充电器/episode_000076",
+      "window": [
+        0.0,
+        7.0333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/插充电器/data/chunk-000/episode_000076.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/纸巾盒换纸巾/episode_000782",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/纸巾盒换纸巾/data/chunk-000/episode_000782.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/无线充电/episode_000059",
+      "window": [
+        0.0,
+        7.5333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/无线充电/data/chunk-000/episode_000059.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/整理药箱/episode_000311",
+      "window": [
+        0.0,
+        10.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/整理药箱/data/chunk-000/episode_000311.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/扫台面/episode_000087",
+      "window": [
+        0.0,
+        3.0333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/扫台面/data/chunk-000/episode_000087.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/摆放餐具/episode_000084",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/摆放餐具/data/chunk-000/episode_000084.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/整理抹布/episode_000026",
+      "window": [
+        0.0,
+        30.03333282470703
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/整理抹布/data/chunk-000/episode_000026.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/无线充电/episode_000041",
+      "window": [
+        0.0,
+        4.0333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/无线充电/data/chunk-000/episode_000041.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/插充电器/episode_000613",
+      "window": [
+        0.0,
+        6.0333333015441895
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/插充电器/data/chunk-000/episode_000613.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/衣服装袋/episode_000023",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/衣服装袋/data/chunk-000/episode_000023.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/砧板归架/episode_000008",
+      "window": [
+        0.0,
+        22.03333282470703
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/砧板归架/data/chunk-000/episode_000008.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/冲茶/episode_000021",
+      "window": [
+        0.0,
+        12.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/冲茶/data/chunk-000/episode_000021.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "家居/清理果皮/episode_000006",
+      "window": [
+        0.0,
+        14.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/家居/清理果皮/data/chunk-000/episode_000006.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/插充电器/episode_000756",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/插充电器/data/chunk-000/episode_000756.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/挂抹布/episode_000323",
+      "window": [
+        0.0,
+        15.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/挂抹布/data/chunk-000/episode_000323.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "astribot-s1",
+      "key": "办公/办公收纳/episode_000149",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/vendor/VENDOR-000002/交付-星尘S1-110小时/星尘S1数据/办公/办公收纳/data/chunk-000/episode_000149.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "f74464a75ccf3125e20fd77e80c62f2fba4c040a46e9313c3f82eeee815674c6",
+      "cohort": "heldout_astribot-s1"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "sort_screws_and_nuts/episode_000147",
+      "window": [
+        1.0222222805023193,
+        16.600000381469727
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/sort_screws_and_nuts/data/chunk-000/episode_000147.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "put_tennis_ball_in_bucket/episode_001101",
+      "window": [
+        0.0,
+        5.488888740539551
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/put_tennis_ball_in_bucket/data/chunk-001/episode_001101.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_towel_into_box/episode_000447",
+      "window": [
+        0.0,
+        4.511111259460449
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_towel_into_box/data/chunk-000/episode_000447.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_airplane_box/episode_000066",
+      "window": [
+        0.0,
+        9.066666603088379
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_airplane_box/data/chunk-000/episode_000066.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_8layers/episode_000278",
+      "window": [
+        0.0,
+        9.066666603088379
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_8layers/data/chunk-000/episode_000278.parquet",
+      "passed": false,
+      "details": {
+        "masked_fraction_by_channel": {
+          "right_joint4": 0.07598
+        },
+        "disagreement_reasons": {
+          "right_joint4": [
+            {
+              "code": "unresponsive_feedback",
+              "effect": "mask",
+              "start_s": 1.600000023841858,
+              "end_s": 2.288888931274414,
+              "rows": [
+                72,
+                103
+              ],
+              "evidence": {
+                "action_range": 0.18158996105194092,
+                "state_range": 0.000766754150390625,
+                "median_error": 0.11001467704772949
+              }
+            }
+          ]
+        }
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "put_tennis_ball_in_bucket/episode_001990",
+      "window": [
+        0.0,
+        2.6222221851348877
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/put_tennis_ball_in_bucket/data/chunk-001/episode_001990.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_towel_into_box/episode_001824",
+      "window": [
+        0.0,
+        6.02222204208374
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_towel_into_box/data/chunk-001/episode_001824.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "insert_shape_blocks/episode_000457",
+      "window": [
+        0.0,
+        14.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/insert_shape_blocks/data/chunk-000/episode_000457.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_6layers/episode_000243",
+      "window": [
+        0.0,
+        6.02222204208374
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_6layers/data/chunk-000/episode_000243.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_2layers/episode_000038",
+      "window": [
+        0.0,
+        4.622222423553467
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_2layers/data/chunk-000/episode_000038.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_7layers/episode_000301",
+      "window": [
+        0.0,
+        3.066666603088379
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_7layers/data/chunk-000/episode_000301.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "insert_shape_blocks/episode_000803",
+      "window": [
+        0.0,
+        7.488888740539551
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/insert_shape_blocks/data/chunk-000/episode_000803.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_towel_into_box/episode_000867",
+      "window": [
+        2.1777777671813965,
+        4.488888740539551
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_towel_into_box/data/chunk-000/episode_000867.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_9layers/episode_000573",
+      "window": [
+        1.5555555820465088,
+        6.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_9layers/data/chunk-000/episode_000573.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_5layers/episode_000215",
+      "window": [
+        0.0,
+        4.377777576446533
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_5layers/data/chunk-000/episode_000215.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_towel_into_box/episode_002165",
+      "window": [
+        0.0,
+        15.088889122009277
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_towel_into_box/data/chunk-002/episode_002165.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "stack_jenga_tower_3layers/episode_000116",
+      "window": [
+        0.0,
+        10.577777862548828
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/stack_jenga_tower_3layers/data/chunk-000/episode_000116.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "insert_shape_blocks/episode_000671",
+      "window": [
+        0.0,
+        12.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/insert_shape_blocks/data/chunk-000/episode_000671.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "insert_shape_blocks/episode_000932",
+      "window": [
+        0.0,
+        12.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/insert_shape_blocks/data/chunk-000/episode_000932.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "fold_towel_into_box/episode_001173",
+      "window": [
+        0.0,
+        3.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/fold_towel_into_box/data/chunk-001/episode_001173.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "place_fruits_on_plates/episode_000311",
+      "window": [
+        3.0222222805023193,
+        6.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/place_fruits_on_plates/data/chunk-000/episode_000311.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "place_medal_in_box/episode_000024",
+      "window": [
+        0.0,
+        7.55555534362793
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/place_medal_in_box/data/chunk-000/episode_000024.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "put_tennis_ball_in_bucket/episode_000742",
+      "window": [
+        0.0,
+        7.488888740539551
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/put_tennis_ball_in_bucket/data/chunk-000/episode_000742.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "lingyu",
+      "key": "put_tennis_ball_in_bucket/episode_001241",
+      "window": [
+        1.288888931274414,
+        16.600000381469727
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/lingyu-realworld-robotics-dataset/put_tennis_ball_in_bucket/data/chunk-001/episode_001241.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "56fe26fd1decdafeb6305360186531cf3783774624f981f85a7d0042a56db175",
+      "cohort": "heldout_lingyu"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22018_2026_08_22_13_54_18_train__episode_000027",
+      "window": [
+        0.0,
+        3.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22018_2026_08_22_13_54_18_train/lerobotv2.1/data/chunk-000/episode_000027.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_09_05_13_36_36_train__episode_000003",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_09_05_13_36_36_train/lerobotv2.1/data/chunk-000/episode_000003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22002_2026_08_28_20_40_41_train__episode_000010",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22002_2026_08_28_20_40_41_train/lerobotv2.1/data/chunk-000/episode_000010.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_27_16_28_49_train__episode_000020",
+      "window": [
+        2.0,
+        7.5
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_27_16_28_49_train/lerobotv2.1/data/chunk-000/episode_000020.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22002_2026_08_26_19_32_23_train__episode_000000",
+      "window": [
+        0.0,
+        6.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22002_2026_08_26_19_32_23_train/lerobotv2.1/data/chunk-000/episode_000000.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_06_16_19_09_01_train__episode_000010",
+      "window": [
+        2.366666555404663,
+        14.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_06_16_19_09_01_train/lerobotv2.1/data/chunk-000/episode_000010.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_09_07_10_15_04_train__episode_000003",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_09_07_10_15_04_train/lerobotv2.1/data/chunk-000/episode_000003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_26_13_42_17_train__episode_000001",
+      "window": [
+        2.066666603088379,
+        12.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_26_13_42_17_train/lerobotv2.1/data/chunk-000/episode_000001.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22018_2026_08_21_19_14_46_train__episode_000005",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22018_2026_08_21_19_14_46_train/lerobotv2.1/data/chunk-000/episode_000005.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22018_2026_09_10_13_50_12_train__episode_000003",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22018_2026_09_10_13_50_12_train/lerobotv2.1/data/chunk-000/episode_000003.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_29_10_17_58_train__episode_000015",
+      "window": [
+        0.0,
+        3.5
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_29_10_17_58_train/lerobotv2.1/data/chunk-000/episode_000015.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22018_2026_08_23_10_09_52_train__episode_000010",
+      "window": [
+        0.0,
+        3.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22018_2026_08_23_10_09_52_train/lerobotv2.1/data/chunk-000/episode_000010.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_26_16_10_00_train__episode_000002",
+      "window": [
+        0.0,
+        6.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_26_16_10_00_train/lerobotv2.1/data/chunk-000/episode_000002.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_25_19_23_47_train__episode_000015",
+      "window": [
+        2.0333333015441895,
+        12.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_25_19_23_47_train/lerobotv2.1/data/chunk-000/episode_000015.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_09_06_13_57_18_train__episode_000031",
+      "window": [
+        0.0,
+        5.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_09_06_13_57_18_train/lerobotv2.1/data/chunk-000/episode_000031.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_08_05_19_12_19_train__episode_000023",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_08_05_19_12_19_train/lerobotv2.1/data/chunk-000/episode_000023.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22018_2026_08_17_13_45_19_train__episode_000013",
+      "window": [
+        2.1666667461395264,
+        13.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22018_2026_08_17_13_45_19_train/lerobotv2.1/data/chunk-000/episode_000013.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_29_19_08_45_train__episode_000005",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_29_19_08_45_train/lerobotv2.1/data/chunk-000/episode_000005.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_28_19_13_52_train__episode_000017",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_28_19_13_52_train/lerobotv2.1/data/chunk-000/episode_000017.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_08_30_14_43_49_train__episode_000010",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_08_30_14_43_49_train/lerobotv2.1/data/chunk-000/episode_000010.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_25_13_34_08_train__episode_000007",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_25_13_34_08_train/lerobotv2.1/data/chunk-000/episode_000007.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22002_2026_09_08_10_19_39_train__episode_000007",
+      "window": [
+        0.0,
+        10.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22002_2026_09_08_10_19_39_train/lerobotv2.1/data/chunk-000/episode_000007.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22018_2026_08_23_14_00_03_train__episode_000002",
+      "window": [
+        0.0,
+        9.0
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22018_2026_08_23_14_00_03_train/lerobotv2.1/data/chunk-000/episode_000002.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    },
+    {
+      "dataset": "roco_taskboard",
+      "key": "task_board_assembly/season_POC22061_2026_07_28_13_50_00_train__episode_000001",
+      "window": [
+        1.9333332777023315,
+        7.5
+      ],
+      "expect": "retained_targets",
+      "source": "/mnt/ccm-raw/public/RoCo_TaskBoardAssembly/season_POC22061_2026_07_28_13_50_00_train/lerobotv2.1/data/chunk-000/episode_000001.parquet",
+      "passed": true,
+      "details": {
+        "masked_fraction_by_channel": {},
+        "disagreement_reasons": {}
+      },
+      "profile_sha256": "7482dffb73fd06ba6e697636c44f011f4b286392899aac5f174b1fea5914adef",
+      "cohort": "heldout_roco_taskboard"
+    }
+  ],
+  "references": [
+    "/mnt/oss/data_pipeline/robot-clean/cache/sharpadex/v3-subtask-20261117/audit/EXCLUDED.json",
+    "/mnt/oss/data_pipeline/robot-clean/cache/sharpadex/v3-subtask-20261117/PACKAGE_READY.json"
+  ],
+  "note": "Curated replay and held-out agreement with cache audit, not independent physical ground truth."
+}
