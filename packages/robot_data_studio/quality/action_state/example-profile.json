@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dataset": "astribot-s1-right-arm-example",
+  "time_column": "timestamp",
+  "channels": [
+    {
+      "name": "right_arm_6",
+      "kind": "arm",
+      "role": "target",
+      "evidence": "Astribot S1 clean-v1-v114-20261119 audit/technical/contract.json",
+      "action": {"column": "action.arm.position", "component": 13, "unit": "rad"},
+      "state": {"column": "observation.state.arm.position", "component": 13, "unit": "rad"},
+      "edge": "review"
+    }
+  ]
+}
