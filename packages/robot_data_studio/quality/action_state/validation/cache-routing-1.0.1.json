@@ -1,0 +1,83 @@
+{
+  "counts": {
+    "agibotworld-beta_clips": 855,
+    "agibot_arm_channel_clips": 11970,
+    "agibot_arm_proxy_values": 5411980,
+    "agibot_nonarm_unchanged_channel_clips": 5834,
+    "agibot_nonarm_unchanged_command_rows": 2614278,
+    "agibot_prior_command_channel_clips": 3239,
+    "agibot_prior_command_rows": 1160369,
+    "robocoin_clips": 4,
+    "robocoin_prior_command_rows": 2193,
+    "robocoin_next_state": 3,
+    "robocoin_same_state": 5
+  },
+  "examples": [
+    {
+      "uid": "01f4bf3ded8b6a57fd81",
+      "episode": "robocoin/train/leju_robot_moving_parts_j/episode_000074",
+      "slot": 31,
+      "signature": "next_state",
+      "before": 1621,
+      "after": 0
+    },
+    {
+      "uid": "0966bb6e84f43e1448d6",
+      "episode": "robocoin/train/leju_robot_moving_parts_o/episode_000181",
+      "slot": 78,
+      "signature": "next_state",
+      "before": 271,
+      "after": 0
+    },
+    {
+      "uid": "166697b0a4091f639800",
+      "episode": "robocoin/train/RMC-AIDA-L_basket_storage_long_bread/episode_000698",
+      "slot": 2,
+      "signature": "same_state",
+      "before": 38,
+      "after": 0
+    },
+    {
+      "uid": "166697b0a4091f639800",
+      "episode": "robocoin/train/RMC-AIDA-L_basket_storage_long_bread/episode_000698",
+      "slot": 3,
+      "signature": "same_state",
+      "before": 38,
+      "after": 0
+    },
+    {
+      "uid": "166697b0a4091f639800",
+      "episode": "robocoin/train/RMC-AIDA-L_basket_storage_long_bread/episode_000698",
+      "slot": 6,
+      "signature": "same_state",
+      "before": 38,
+      "after": 0
+    },
+    {
+      "uid": "166697b0a4091f639800",
+      "episode": "robocoin/train/RMC-AIDA-L_basket_storage_long_bread/episode_000698",
+      "slot": 14,
+      "signature": "same_state",
+      "before": 38,
+      "after": 0
+    },
+    {
+      "uid": "166697b0a4091f639800",
+      "episode": "robocoin/train/RMC-AIDA-L_basket_storage_long_bread/episode_000698",
+      "slot": 15,
+      "signature": "same_state",
+      "before": 38,
+      "after": 0
+    },
+    {
+      "uid": "17412c580cc8b4972532",
+      "episode": "robocoin/train/alpha_bot_2_stack_building_blocks/episode_000122",
+      "slot": 5,
+      "signature": "next_state",
+      "before": 111,
+      "after": 0
+    }
+  ],
+  "reference_commit": "50128205e0fe117591642b5806aec5a4efb50036",
+  "selection_sha256": "44fdeaf6efde1ce3082e430e3b4426bf616f9c8d0abbba93e5f1cde6b16179d5"
+}

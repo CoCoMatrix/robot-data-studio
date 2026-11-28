@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, replace
 import math
 import numpy as np
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 UNIT = {
     "arm": "rad",
     "hand": "rad",

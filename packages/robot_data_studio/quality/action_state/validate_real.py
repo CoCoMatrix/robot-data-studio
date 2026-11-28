@@ -395,6 +395,7 @@ def main():
                 for p in (
                     "action_state.py",
                     "contract.py",
+                    "cache_roles.py",
                     "probe.py",
                     "profiles.py",
                     "run_operator.py",

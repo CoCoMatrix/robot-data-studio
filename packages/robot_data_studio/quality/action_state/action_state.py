@@ -4,6 +4,7 @@ from dataclasses import asdict
 from hashlib import sha256
 import json
 import numpy as np
+from .cache_roles import resolve_cache_roles
 from .contract import (
     VERSION,
     UNIT,
@@ -16,7 +17,7 @@ from .contract import (
 )
 from .probe import probe
 
-# Probe verdicts that contradict a declared command target. Exact copies are caught by the signature.
+# Additional probe verdicts that contradict a declared command target.
 SEMANTIC_GATE = {
     "same_state_noisy",
     "future_state",
@@ -313,6 +314,7 @@ def analyze(
 ):
     """signals[name] contains raw action/state vectors and optional boolean validity vectors."""
     validate_profile(profile)
+    profile = resolve_cache_roles(profile)
     t = np.asarray(time_s, dtype=float)
     if t.ndim != 1 or len(t) < 2 or not np.isfinite(t).all() or np.any(np.diff(t) <= 0):
         raise ValueError(
@@ -469,10 +471,15 @@ def analyze(
             gate = SEMANTIC_GATE - (APERTURE_SOFT if kind == "aperture" else set())
             if c.get("contact_possible"):
                 gate = gate - CONTACT_SOFT
+            # Either detector may establish a copy. A probe-only copy follows the
+            # same review policy as the exact signature, including for contact channels.
+            exact_copy = verdict in ("same_state", "next_state")
             if verdict in SEMANTIC_GATE - gate:
                 flags.append(dict(code="semantic_" + verdict, effect="review", scope="channel", evidence=row["semantic"]))
-            elif verdict in gate and not (verdict in accepted.get("verdicts", []) and accepted.get("evidence")):
-                row["reason"] = "semantic_" + verdict
+            elif exact_copy or (verdict in gate and not (
+                verdict in accepted.get("verdicts", []) and accepted.get("evidence")
+            )):
+                row["reason"] = "copy_candidate" if exact_copy else "semantic_" + verdict
                 if c.get("group"):
                     group_data[name] = (c["group"], valid, a, s)
                 continue

@@ -3,6 +3,8 @@
 import argparse
 import json
 
+from .cache_roles import AGIBOT_DATASET, AGIBOT_SOURCE
+
 
 def joint(
     name,
@@ -61,6 +63,7 @@ def aperture(name, act, st, ac_points, st_points, anchors, evidence):
 
 
 NAMES = (
+    "agibotworld-beta-robot100-v3-20261116",
     "astribot-s1",
     "sharpadex",
     "roco_taskboard",
@@ -73,7 +76,12 @@ NAMES = (
 def preset(dataset):
     c = []
     p = dict(version=1, dataset=dataset, channels=c)
-    if dataset in ("sharpadex", "roco_taskboard"):
+    if dataset == "agibotworld-beta-robot100-v3-20261116":
+        # A cache layout preset, distinct from a source-native AgiBot adapter.
+        p.update(dataset=AGIBOT_DATASET, cache_source=dict(AGIBOT_SOURCE))
+        for slot in range(14):
+            c.append(joint(str(slot), "action", "state", slot, evidence="robot100 published arm slot"))
+    elif dataset in ("sharpadex", "roco_taskboard"):
         sharpa = dataset == "sharpadex"
         ev = (
             "SharpaDex v3 native absolute joint targets; audit/EXCLUSION-POLICY-V2.json"

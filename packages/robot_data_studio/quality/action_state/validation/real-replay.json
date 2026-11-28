@@ -55,12 +55,13 @@
   },
   "case_list_sha256": "dfc49b9bcb6d8f6d63b2f0b54f7cd8749fd7f9b1d68fa995e07586c40cc1e025",
   "code_sha256": {
-    "action_state.py": "0ffec7678ca3c602e1d2290cf746ea40b7e8caf6f0890ac178ce8528e771db11",
-    "contract.py": "2f4ba67b1ff6f68f6b994858cd2cc38f7956d0a5ea0d946693c371a0ea4bbc84",
+    "action_state.py": "67d4df07b4545c71b03d4977e3a1f455b575301990301c520564f46d87d42bda",
+    "contract.py": "305f9a98e4a4bc815c00e68530994555f091144a384d56764737e07716791ee6",
+    "cache_roles.py": "974fb894604d40e3d7729e8afcc170bf119b9621763459826331e019a4516702",
     "probe.py": "fdfbab061c1fa0d00802f94b241d014067a1c8456fadfdf34bba593c958146dc",
-    "profiles.py": "4758ae74d646f108785280e1f8211bf8533e56d3b00b13cace51e1a46e6218dd",
+    "profiles.py": "d5cbf8a38b85566731bfe27c392badbcd32119799f57ae58834eeeb525528638",
     "run_operator.py": "da0805b2d2cdb18bf2f8e263835c8ce8bbb23b3dcaf5917252b15cf1fc9c0055",
-    "validate_real.py": "e8074806859e2eec02e81e97478b0bef990add7876803686ac5649ff81586d07"
+    "validate_real.py": "3f0f014acd5ebdeafce785d027a02e6899b06143a14aebcb4ecbb1db2240f542"
   },
   "cases": [
     {

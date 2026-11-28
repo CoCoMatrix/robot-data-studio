@@ -289,6 +289,76 @@ class OperatorTests(unittest.TestCase):
         p = test_profile(accept_semantic={"verdicts": ["unit_mismatch"], "evidence": "vendor spec"})
         self.assertEqual(self.run_pair(a, self.s, p)["route"], "command")
 
+    def test_probe_only_copy_is_withheld_from_both_training_masks(self):
+        t = np.arange(600) / 30
+        s = np.sin(1.2 * t) + 0.23 * np.sin(4.1 * t)
+        for lag, verdict in [(0, "same_state"), (1, "next_state")]:
+            a = np.roll(s, -lag)
+            a[::33] += 0.02
+            report = analyze("ep", t, {"j": dict(action=a, state=s)}, test_profile())
+            ch = report["channels"]["j"]
+            self.assertEqual(ch["alignment"]["signature"], "undetermined")
+            self.assertEqual(ch["semantic"]["verdict"], verdict)
+            self.assertEqual(ch["route"], "review")
+            self.assertFalse(usable_mask(report, ["j"]).any())
+            self.assertFalse(usable_mask(report, ["j"], supervision="state_proxy").any())
+
+    def test_release_scoped_agibot_arm_rechecks_each_native_row(self):
+        arm = joint("left", "action", "state", 0, evidence="cache target")
+        other = joint("head", "action", "state", 78, evidence="cache target")
+        a = np.full(300, 0.2)
+        s = a.copy()
+        s[12] += 0.1
+        valid = np.ones(300, bool)
+        valid[50] = False
+        p = dict(version=1, dataset="agibotworld-beta", channels=[arm, other],
+                 cache_source=dict(release="agibotworld-beta/v3-subtask-20261116",
+                                   robot="agibot_g1", layout="robot100"))
+        original = copy.deepcopy(p)
+        signals = {name: dict(action=a, state=s, state_valid=valid) for name in ("left", "head")}
+        report = analyze("ep", self.t, signals, p)
+        self.assertEqual(p, original)
+        self.assertEqual(report["channels"]["left"]["route"], "state_proxy")
+        self.assertFalse(usable_mask(report, ["left"]).any())
+        expected = valid.copy()
+        expected[12] = False
+        np.testing.assert_array_equal(usable_mask(report, ["left"], supervision="state_proxy")[:, 0], expected)
+        np.testing.assert_array_equal(usable_mask(report, ["head"])[:, 0], valid)
+        signals["left"]["state"] = s + 0.3
+        mismatch = analyze("ep", self.t, signals, p)
+        self.assertEqual(mismatch["channels"]["left"]["route"], "review")
+        self.assertFalse(usable_mask(mismatch, ["left"], supervision="state_proxy").any())
+
+    def test_published_cache_preset_via_parquet_entrypoint(self):
+        p = preset("agibotworld-beta-robot100-v3-20261116")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "agibot-arm-cache.parquet"
+            values = np.full((3, 100), 0.2)
+            pq.write_table(pa.table({
+                "timestamp": [0.0, 0.033, 0.067],
+                "action": values.tolist(), "state": values.tolist(),
+            }), path)
+            report = run_parquet(p, path, "cache-fixture", single_episode=True)
+        names = [str(k) for k in range(14)]
+        self.assertEqual(list(report["channels"]), names)
+        self.assertFalse(usable_mask(report, names).any())
+        self.assertTrue(usable_mask(report, names, supervision="state_proxy").all())
+
+    def test_unverified_cache_scopes_and_mismatched_slots_do_not_inherit(self):
+        source = dict(release="agibotworld-beta/v3-subtask-20261116", robot="agibot_g1", layout="robot100")
+        ch = joint("j", "action", "state", 13, evidence="verified independent target")
+        for dataset, info, channel in [
+            ("another", source, ch),
+            ("agibotworld-beta", {}, ch),
+            ("agibotworld-beta", dict(source, release="agibotworld-beta/other"), ch),
+            ("agibotworld-beta", dict(source, robot="another"), ch),
+            ("agibotworld-beta", dict(source, layout="raw"), ch),
+            ("agibotworld-beta", source, dict(ch, state=dict(ch["state"], component=12))),
+            ("agibotworld-beta", source, dict(ch, action=dict(ch["action"], column="raw"))),
+        ]:
+            p = dict(version=1, dataset=dataset, cache_source=info, channels=[channel])
+            self.assertEqual(self.run_pair(np.ones(300), np.ones(300), p)["command_rows"], 300)
+
     def test_declared_proxy_needs_most_rows_to_agree(self):
         a = self.s + 0.01
         a[:5] = self.s[:5]

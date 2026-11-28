@@ -1,4 +1,4 @@
-# Action–State 一致性算子 v1.0
+# Action–State 一致性算子 v1.0.1
 
 面向机器人动作监督。一次读一个 episode，在原始采样率和源时钟上检查已配对的物理通道，输出哪些行、哪些动作通道可参与训练。程序只读源数据，CPU 运行，依赖 NumPy 与 PyArrow。
 
@@ -54,7 +54,7 @@ proxy_ok = usable_mask(report, ["right_arm_6"], supervision="state_proxy")
 
 | 问题 | 判据与处理 |
 |---|---|
-| 动作列是状态复制 | 运动帧上比较 `a[t]` 与 `s[t]`、`s[t+1]`，至少 20 个活动转移、一个时移近乎精确匹配且另一时移有区分度，记复制候选。声明为代理时逐值复核，匹配率 ≥0.95 才路由 `state_proxy`。 |
+| 动作列是状态复制 | 运动帧上比较 `a[t]` 与 `s[t]`、`s[t+1]`，至少 20 个活动转移、一个时移近乎精确匹配且另一时移有区分度，记复制候选。对声明为指令的通道，旧签名或语义探针任一判为同帧或下一帧复制，均走 `review / copy_candidate`，指令与代理掩码均为假。声明为代理时逐值复核，匹配率 ≥0.95 才路由 `state_proxy`。 |
 | 语义前置门（声明为 target 时） | `probe.py` 不依赖声明，在运动帧上估计：±1 s 内的时移精确复制；跟踪误差对速度回归得到的隐含超前帧数与显著性；水平相关、斜率与零偏；与 d(state)/dt 的相关。结论为同帧带噪复制、未来 / 过去状态复制、action 滞后于 state、符号反向、单位错误、速度当位置、action 恒定或与 state 无关时，该通道转 `review`（`reason=semantic_*`）。夹爪握持和手指接触会合理地造成脱节，这两类通道对“带噪复制 / 速度当位置 / 无关”只记复核事件。集首 2 s 初始化段不参与语义判定。确认合理的差异可在通道上声明 `accept_semantic: {verdicts: [...], evidence: ...}`。 |
 | 指令变化、反馈长期不动 | 同一连续有效区间内检测“持续变化的命令 + 近乎静止的反馈”，以及“从已跟踪位置出现台阶、宽限期过后仍无响应”。须同时满足运动幅度、反馈噪声、持续时间和误差条件。已证实的停滞延续到反馈重新变化或误差消退。屏蔽命中通道。 |
 | 接管跳变 | 在真实集首 / 尾附近检查同一关节的单帧指令跳变和反馈变化，要求误差同步增大，恢复需连续维持一段时间。profile 可选只记录或屏蔽、检查哪一端，以及按追上时刻或固定缓冲窗结束。 |
@@ -67,7 +67,24 @@ proxy_ok = usable_mask(report, ["right_arm_6"], supervision="state_proxy")
 1. 对齐源时钟，指定上游 keep、源缺值与有效标志。明确每个通道的物理量、单位、方向，以及 action 是实际命令、同帧代理、下一帧代理还是未知。不确定时先声明为 `target`，由语义前置门给出证据。
 2. 从[单通道 profile](example-profile.json) 开始，用 `--profile` 替换 `--preset`。夹爪标定折线与开闭锚点可参考 `python -m robot_data_studio.quality.action_state.profiles lingyu` 的输出。
 3. 对 HDF5、ROS 等格式只需写读取适配器，调用 `analyze(episode_id, time_s, signals, profile, keep=...)`；`signals[name]` 含同长的一维 `action`、`state`，可选布尔 `action_valid`、`state_valid`，保持源单位。
-4. 接入前按任务和设备采样，复核正常动作、真实坏窗、合法接触及时间断档，冻结 profile 后再批量运行。随代码提供 6 份预设：Astribot S1、SharpaDex、RoCo TaskBoard、LingYu、FineART、智元 G1。同一数据集含多个本体、控制模式或采样率时分别冻结。
+4. 接入前按任务和设备采样，复核正常动作、真实坏窗、合法接触及时间断档，冻结 profile 后再批量运行。随代码提供 6 份源数据预设：Astribot S1、SharpaDex、RoCo TaskBoard、LingYu、FineART、智元 G1。同一数据集含多个本体、控制模式或采样率时分别冻结。
+
+### AgiBot 已发布 cache 的接入
+
+`agibotworld-beta-robot100-v3-20261116` 专用于该版本已映射的双臂标签。完整 robot100 调用方可保留原通道声明，在 profile 中从发布清单与片段元数据填入来源：
+
+```json
+{
+  "dataset": "agibotworld-beta",
+  "cache_source": {
+    "release": "agibotworld-beta/v3-subtask-20261116",
+    "robot": "agibot_g1",
+    "layout": "robot100"
+  }
+}
+```
+
+仅对两侧列名为 `action` 和 `state`、使用相同槽号 0–13 的 rad 关节位置目标应用同帧代理声明。低运动段也逐行检查；参与比较的行至少 95% 精确匹配才放入代理路径，只有匹配且有效的行参与状态预测。其余通道沿用各自的声明与有效掩码。原始 HDF5 或其他版本需要单独核实身份和单位。
 
 ## 阈值
 
@@ -87,15 +104,28 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
 
 ### 本版实测范围
 
-- 单测 20/20。
+- 该算子单测 24/24。
 - 真实回放：6 个数据集共 156 个 episode，结果 155/156。其中 SharpaDex 接管坏窗 24/24、手部失配 24/24；S1、RoCo、SharpaDex 历史保留窗口各 24/24，LingYu 23/24。唯一分歧是 LingYu 叠积木第 278 集：右臂第 4 关节在 1.600–2.289 s 内指令跨度 0.182 rad、反馈仅 0.00077 rad，短时停滞和慢响应无法区分，暂列待复核。
 - 故障注入留出集：64 个真实保留集、830 个臂通道，共 11,461 例，均未参与调参。语义故障检出率 96.9–100%，与 1126 原版的 0–74% 对比；通道错配单通道视角 73.1%；反馈冻结 97.5%，集首接管 98.7%；正常对照误报 1.0%。
 - 14 个数据集 cache 抽检（15,423 个片段）：相对历史交付结果新增复核 0.34% 的指令通道片段。
 
-### 已知限制
+#### v1.0.1 训练掩码回归
+
+RoboCoin 的 8 个复制通道片段（4 集）进入复核，原有 2,193 个指令监督值归零。AgiBot 的 855 个训练片段包含 11,970 个双臂通道片段；原误作指令的 3,239 个低运动通道片段（1,160,369 个值）全部进入逐值复核的同帧代理路径。另核对 5,834 个配对有效的非臂通道片段，指令掩码与 v1.0 逐行一致。[逐例结果](validation/cache-routing-1.0.1.json)
+
+在冻结的训练样本上重放：
+
+```bash
+python -m robot_data_studio.quality.action_state.validate_cache_routing \
+  --cache-run /mnt/workspace/1127_actionstate \
+  --old-results /mnt/workspace/1127_semantic_probe/results/cache-v11 \
+  --out /tmp/cache-routing-1.0.1.json
+```
+
+## 已知限制
 
 - 只凭 action/state 无法区分“控制器指令”和“未来若干帧读数”，例如 G1 双臂超前约 4 帧，这类问题需上游确认数据来源。
-- 低运动片段无法判定语义，数据集 / 本体级汇总门禁尚未实现。
+- 低运动片段自身不足以确认动作来源。已针对上列 AgiBot 发布版本接入双臂代理契约；其他来源、本体及版本仍需独立证据。
 - 夹爪绝对开合极性仍需每数据集一个开闭锚点。
 - 逐片段通道配对受联动关节干扰，只有数据集级的稳定错配可信；“声明为速度实为位姿”的门控规则尚未接入。
 - 四元数、无对应反馈的底盘、物理量不匹配的槽位不做标量判定；未测策略训练效果。
